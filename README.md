@@ -7,10 +7,10 @@ Installation path is /opt/mosdns-cn
 
 Edit my-config.yaml for your taste or just run the script for lazy guy.
 
-### For x86_64(x86 VM):
+### Install Script(arm64 & amd64):
 ```
 apt install -y wget
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/mosdns-cn-install-amd64.sh)
+bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/mosdns-cn-install.sh)
 ```
 
 ### For arm64(TVbox\r2s\N1\raspberry pi,etc ):
