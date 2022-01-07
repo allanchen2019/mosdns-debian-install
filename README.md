@@ -3,6 +3,10 @@ A shell script installs [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) 
 
 Choose script for arm64 or x86_64 accrodingly.
 
+The installation path is /opt/mosdns-cn
+
+Edit my-config.yaml for your taste or just run the script for lazy guy.
+
 ### For x86_64(x86 VM):
 ```
 apt install -y wget
