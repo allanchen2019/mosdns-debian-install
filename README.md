@@ -19,7 +19,7 @@ apt install -y wget
 bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/mosdns-cn-install-arm64.sh)
 ```
 
-Default configuration use [V2Ray 路由规则文件加强版](https://github.com/Loyalsoldier/v2ray-rules-dat) for split dns resolving and DoH upstream servers:
+Default configuration use [V2Ray 路由规则文件加强版](https://github.com/Loyalsoldier/v2ray-rules-dat) for split dns resolving and DoH upstream servers.
 
 Click [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) for more information.
 
