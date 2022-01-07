@@ -7,17 +7,14 @@ Installation path is /opt/mosdns-cn
 
 Edit my-config.yaml for your taste or just run the script for lazy guy.
 
-### Install Script(for amd64):
+### Install Script (for amd64 & arm64):
 ```
 apt install -y wget
 bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/mosdns-cn-install.sh)
 ```
 
-### For arm64(TVbox\r2s\N1\raspberry pi,etc ):
-```
-apt install -y wget
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/mosdns-cn-install-arm64.sh)
-```
+
+
 
 Default configuration use [V2Ray 路由规则文件加强版](https://github.com/Loyalsoldier/v2ray-rules-dat) for split dns resolving and DoH upstream servers.
 
