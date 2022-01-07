@@ -1,6 +1,6 @@
 #!/bin/bash
 apt update
-apt install unzip
+apt install -y unzip
 mkdir -p /opt/mosdns-cn
 cd /opt/mosdns-cn
 wget https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-arm64.zip
