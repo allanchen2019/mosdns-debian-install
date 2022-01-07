@@ -3,7 +3,7 @@
 clear
 architecture=$(dpkg --print-architecture)
 
-apt update && apt install -y unzip
+apt install -y unzip
 mkdir -p /opt/mosdns-cn
 cd /opt/mosdns-cn
 wget --show-progress -t 5 -T 10 -cqO https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-"$architecture".zip
