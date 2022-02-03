@@ -15,7 +15,7 @@ debug: true
 #upstream: []
 local_upstream: [https://dns.alidns.com/dns-query,https://doh.pub/dns-query]
 local_ip: [geoip.dat:cn]
-local_domain: [geosite.dat:cn]
+local_domain: [geosite.dat:cn,geosite.dat:category-games@cn]
 local_latency: 50
 remote_upstream: [https://dns.google/dns-query,https://cloudflare-dns.com/dns-query]
 remote_domain: [geosite.dat:geolocation-!cn]
