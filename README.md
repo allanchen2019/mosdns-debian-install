@@ -15,5 +15,3 @@ bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanc
 
 
 Default configuration use [V2Ray 路由规则文件加强版](https://github.com/Loyalsoldier/v2ray-rules-dat) for split dns resolving and DoH upstream servers.
-
-Click [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) for more information.
