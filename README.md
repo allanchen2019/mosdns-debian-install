@@ -1,5 +1,5 @@
 # mosdns-cn-debian-install
-A shell script installs [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) on Debian(or derived) Linux.
+A shell script installs [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) on Debian(or derivatives) Linux.
 
 Edit my-config.yaml for your taste or just run the script for lazy guy.
 
