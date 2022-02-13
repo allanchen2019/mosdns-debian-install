@@ -12,7 +12,7 @@ bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanc
 ### Install with pihole (as pihole's upstream):
 ```
 apt install -y wget
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/install-pihole.sh)
+bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/install-with-pihole.sh)
 ```
 ### Uninstall:
 ```
