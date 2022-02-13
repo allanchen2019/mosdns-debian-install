@@ -6,7 +6,7 @@ Edit my-config.yaml for your taste or just run the script for lazy guy.
 ### Install (tested on amd64 & arm64):
 ```
 apt install -y wget
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/mosdns-cn-install.sh)
+bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/install.sh)
 ```
 ### Uninstall:
 ```
