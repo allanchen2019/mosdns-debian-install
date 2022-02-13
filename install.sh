@@ -16,7 +16,7 @@ wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/geosite.dat https://github.c
 
 chmod +x update-geo.sh
 unzip mosdns-cn.zip
-./mosdns-cn --service install --config my-config.yaml
+./mosdns-cn --service install --config config.yaml
 ./mosdns-cn --service start
 systemctl status mosdns-cn.service
 
