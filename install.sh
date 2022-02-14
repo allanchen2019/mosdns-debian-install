@@ -3,7 +3,7 @@
 clear
 architecture=$(dpkg --print-architecture)
 
-apt install -y unzip
+apt install -y unzip git
 #mkdir -p /opt/mosdns-cn
 cd /opt
 git clone https://github.com/allanchen2019/mosdns-cn-debian-install.git
