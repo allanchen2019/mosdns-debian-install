@@ -3,7 +3,7 @@
 clear
 architecture=$(dpkg --print-architecture)
 
-apt install -y unzip
+apt install -y unzip git
 #mkdir -p /opt/mosdns-cn
 cd /opt
 git clone https://github.com/allanchen2019/mosdns-cn-debian-install.git
@@ -20,4 +20,4 @@ unzip mosdns-cn.zip
 ./mosdns-cn --service start
 systemctl status mosdns-cn.service
 
-/bin/bash -c 'echo "0 7 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
+/bin/bash -c 'echo "0 12 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
