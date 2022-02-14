@@ -14,7 +14,7 @@ wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/mosdns-cn.zip https://github
 wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
 wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
 
-chmod +x update-geo.sh
+chmod +x *.sh
 unzip mosdns-cn.zip
 ./mosdns-cn --service install --config config-pihole.yaml
 ./mosdns-cn --service start
