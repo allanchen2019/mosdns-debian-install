@@ -20,4 +20,4 @@ unzip mosdns-cn.zip
 ./mosdns-cn --service start
 systemctl status mosdns-cn.service
 
-/bin/bash -c 'echo "0 7 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
+/bin/bash -c 'echo "0 12 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
