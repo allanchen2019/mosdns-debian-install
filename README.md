@@ -6,7 +6,7 @@ A proper ip split tunneling for native and remote dns servers is required.
 
 See https://github.com/allanchen2019/ospf-over-wireguard for more detail.
 
-### Install standalone (tested on amd64 & arm64):
+### Install standalone (amd64 & arm64):
 ```
 apt install -y wget git
 cd /opt
