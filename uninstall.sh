@@ -6,3 +6,4 @@ cd /opt/mosdns-cn/bin
 ./mosdns-cn --service uninstall
 rm -rf /opt/mosdns-cn
 sed -i '/mosdns-cn/d' /etc/crontab
+echo "Uninstall complete."
