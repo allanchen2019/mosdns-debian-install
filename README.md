@@ -9,11 +9,7 @@ apt install -y wget
 bash <(wget --no-check-certificate -qO- https://ghproxy.com/https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/install.sh)
 ```
 
-### Install with pihole (as pihole's upstream):
-```
-apt install -y wget
-bash <(wget --no-check-certificate -qO- https://ghproxy.com/https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/install-with-pihole.sh)
-```
+
 ### Uninstall:
 ```
 bash <(wget --no-check-certificate -qO- https://ghproxy.com/https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
