@@ -15,7 +15,7 @@ wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/geoip.dat https://ghproxy.co
 wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/geosite.dat https://ghproxy.com/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
 
 chmod +x *.sh
-unzip mosdns-cn.zip
+unzip -o mosdns-cn.zip
 ./mosdns-cn --service install --config config.yaml
 ./mosdns-cn --service start
 systemctl status mosdns-cn.service
