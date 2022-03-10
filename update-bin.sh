@@ -1,6 +1,6 @@
 clear
 architecture=$(dpkg --print-architecture)
-cd /opt/mosdns-cn
+cd /opt/mosdns-cn/bin
 rm mosdns-cn*
 wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/mosdns-cn.zip https://ghproxy.com/https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-"$architecture".zip
 unzip -o mosdns-cn.zip
