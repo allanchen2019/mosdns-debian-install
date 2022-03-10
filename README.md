@@ -10,7 +10,7 @@ cd /opt
 git clone https://ghproxy.com/https://github.com/allanchen2019/mosdns-cn-debian-install.git
 mv mosdns-cn-debian-install mosdns-cn
 cd mosdns-cn
-chmod+ x *.sh
+chmod +x *.sh
 ./install.sh
 ```
 
