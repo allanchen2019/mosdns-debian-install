@@ -3,14 +3,9 @@
 clear
 architecture=$(dpkg --print-architecture)
 
-apt install -y unzip git
-#mkdir -p /opt/mosdns-cn
-cd /opt
-git clone https://ghproxy.com/https://github.com/allanchen2019/mosdns-cn-debian-install.git
-mv mosdns-cn-debian-install mosdns-cn
-cd mosdns-cn
-chmod +x *.sh
-mkdir -p bin
+apt install -y unzip
+cd /opt/mosdns-cn
+mkdir bin
 cd bin
 
 wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/mosdns-cn.zip https://ghproxy.com/https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-"$architecture".zip
