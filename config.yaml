@@ -1,0 +1,23 @@
+server_addr: ':53530'
+blacklist_domain:
+  - 'geosite.dat:category-ads-all'
+debug: true
+local_upstream:
+  - 'tls://223.5.5.5'
+  - 'tls://223.6.6.6'
+#  - 'tls://120.53.53.53'
+local_ip:
+  - 'geoip.dat:cn'
+local_domain:
+  - 'geosite.dat:cn'
+  - 'geosite.dat:category-games@cn'
+local_latency: 30
+remote_upstream:
+  - 'tls://8.8.8.8'
+  - 'tls://1.1.1.1'
+remote_domain:
+  - 'geosite.dat:geolocation-!cn'
+
+enable_pipeline: true
+enable_http3: true
+
