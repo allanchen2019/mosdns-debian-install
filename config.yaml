@@ -1,4 +1,4 @@
-server_addr: ':53530'
+server_addr: ':53'
 blacklist_domain:
   - 'geosite.dat:category-ads-all'
 debug: true
