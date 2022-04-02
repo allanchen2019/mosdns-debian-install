@@ -1,16 +1,16 @@
 #!/bin/bash
-
+set -xeuo pipefail
 clear
 architecture=$(dpkg --print-architecture)
 
 apt install -y unzip
-cd /opt/mosdns-cn
+cd /opt/mosdns-cn || exit
 mkdir bin
-cd bin
+cd bin || exit
 
-wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/mosdns-cn.zip https://ghproxy.com/https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-"$architecture".zip
-wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/geoip.dat https://ghproxy.com/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
-wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/geosite.dat https://ghproxy.com/https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
+wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/mosdns-cn.zip https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-"$architecture".zip
+wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
+wget --show-progress -t 5 -T 10 -cqO /opt/mosdns-cn/bin/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
 
 unzip -o mosdns-cn.zip
 #cd mosdns-cn
