@@ -20,5 +20,5 @@ chmod +x *.sh \
 
 ### Uninstall:
 ```
-sh /opt/mosdns-cn/uninstall.sh
+bash /opt/mosdns-cn/uninstall.sh
 ```
