@@ -3,8 +3,8 @@ debug: true
 blacklist_domain:
    - 'geosite.dat:category-ads-all'
 local_upstream:
-#  - 'tls://223.5.5.5'
-#  - 'tls://223.6.6.6'
+  - 'tls://223.5.5.5'
+  - 'tls://223.6.6.6'
   - 'tls://1.12.12.12'
   - 'tls://120.53.53.53'
 local_ip:
@@ -20,10 +20,8 @@ remote_upstream:
   - 'tls://1.0.0.1'
   - 'tls://208.67.220.220'
   - 'tls://208.67.222.222'  
-
 remote_domain:
   - 'geosite.dat:geolocation-!cn'
-
 enable_pipeline: true
 enable_http3: true
 
