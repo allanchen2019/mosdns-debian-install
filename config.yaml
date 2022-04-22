@@ -10,7 +10,7 @@ local_upstream:
 local_ip:
   - 'geoip.dat:cn'
 local_domain:
-  - 'geosite.dat:cn'
+#  - 'geosite.dat:cn'
   - 'geosite.dat:category-games@cn'
 local_latency: 30
 remote_upstream:
