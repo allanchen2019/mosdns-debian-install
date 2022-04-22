@@ -5,8 +5,8 @@ blacklist_domain:
 local_upstream:
   - 'tls://223.5.5.5'
   - 'tls://223.6.6.6'
-  - 'tls://1.12.12.12'
-  - 'tls://120.53.53.53'
+#  - 'tls://1.12.12.12'
+#  - 'tls://120.53.53.53'
 local_ip:
   - 'geoip.dat:cn'
 local_domain:
