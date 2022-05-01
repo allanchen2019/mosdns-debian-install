@@ -1,9 +1,13 @@
 #!/bin/bash
 set -xeuo pipefail
 clear
-cd /opt/mosdns-cn/bin || exit
-./mosdns-cn --service stop
-./mosdns-cn --service uninstall
+
+systemctl stop mosdns-cn.service
+systemctl disable mosdns-cn.service
+rm /etc/systemd/system/mosdns-cn.service
+systemctl daemon-reload
+systemctl reset-failed
+
 rm -rf /opt/mosdns-cn
 sed -i '/mosdns-cn/d' /etc/crontab
 echo "Uninstall complete."
