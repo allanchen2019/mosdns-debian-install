@@ -2,16 +2,14 @@ server_addr: ':53'
 debug: true
 blacklist_domain:
    - 'geosite.dat:category-ads-all'
+   - 'anti-ad-domains.txt'
 local_upstream:
   - 'tls://223.5.5.5'
   - 'tls://223.6.6.6'
-#  - 'tls://1.12.12.12'
-#  - 'tls://120.53.53.53'
 local_ip:
-  - 'geoip.dat:cn'
+  - 'chnroutes.txt'
 local_domain:
-#  - 'geosite.dat:cn'
-  - 'geosite.dat:category-games@cn'
+  - 'accelerated-domains.china.conf.raw.txt'
 local_latency: 30
 remote_upstream:
   - 'tls://8.8.8.8'
@@ -20,8 +18,8 @@ remote_upstream:
   - 'tls://1.0.0.1'
   - 'tls://208.67.220.220'
   - 'tls://208.67.222.222'  
-remote_domain:
-  - 'geosite.dat:geolocation-!cn'
+#remote_domain:
+#  - 'geosite.dat:geolocation-!cn'
 enable_pipeline: true
 enable_http3: true
 
