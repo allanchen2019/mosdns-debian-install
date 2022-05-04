@@ -1,14 +1,16 @@
 server_addr: ':53'
 debug: true
 blacklist_domain:
-   - 'geosite.dat:category-ads-all'
-   - 'anti-ad-domains.txt'
+  - 'geosite.dat:category-ads-all'
+  - 'anti-ad-domains.txt'
 local_upstream:
   - 'tls://223.5.5.5'
   - 'tls://223.6.6.6'
 local_ip:
   - 'chnroutes.txt'
 local_domain:
+  - 'apple.china.conf.raw.txt'
+  - 'google.china.conf.raw.txt'
   - 'accelerated-domains.china.conf.raw.txt'
 local_latency: 30
 remote_upstream:
@@ -22,4 +24,3 @@ remote_upstream:
 #  - 'geosite.dat:geolocation-!cn'
 enable_pipeline: true
 enable_http3: true
-
