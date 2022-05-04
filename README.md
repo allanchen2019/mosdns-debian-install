@@ -8,7 +8,7 @@ See https://github.com/allanchen2019/ospf-over-wireguard for more detail.
 
 ### Install standalone (amd64 & arm64):
 ```
-apt install -y wget git
+apt update && apt install -y wget git unzip
 cd /opt
 git clone https://github.com/allanchen2019/mosdns-cn-debian-install.git
 mv mosdns-cn-debian-install mosdns-cn
