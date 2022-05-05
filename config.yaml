@@ -18,8 +18,7 @@ remote_upstream:
   - 'tls://8.8.4.4'
   - 'tls://1.1.1.1'
   - 'tls://1.0.0.1'
-  - 'tls://208.67.220.220'
-  - 'tls://208.67.222.222'  
+
 #remote_domain:
 #  - 'geosite.dat:geolocation-!cn'
 enable_pipeline: true
