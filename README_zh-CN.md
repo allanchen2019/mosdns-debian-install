@@ -9,7 +9,7 @@
 
 ### 独立安装（amd64和arm64）：
 ```
-wget https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/setup.sh && chmod 777 ./setup.sh && sudo ./setup.sh
+wget https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/AutoSetup.sh && chmod 777 ./setup.sh && sudo ./setup.sh
 ```
 
 
