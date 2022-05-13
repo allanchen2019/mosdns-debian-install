@@ -11,4 +11,4 @@ echo "--------------------"
 echo "完成！您已成功安装mosdns-cn！"
 echo "若您需要卸载，请使用“bash /opt/mosdns-cn/uninstall.sh”指令。"
 echo "--------------------"
-rm -rf ./setup.sh
+rm -rf ./AutoSetup.sh
