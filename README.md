@@ -1,3 +1,4 @@
+[English](README.md) | [简体中文](README_zh-CN.md)
 # mosdns-cn-debian-install
 A shell script installs [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) on Debian(or derivatives) Linux.
 
