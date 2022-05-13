@@ -1,4 +1,4 @@
-[English](README.md) | [简体中文](README_zh-CN.md)
+[English](./README.md) | 简体中文
 # mosdns-cn-debian-install
 一个在Debian（或衍生版）上安装[mosdns-cn](https://github.com/IrineSistiana/mosdns-cn)的shell脚本。
 
