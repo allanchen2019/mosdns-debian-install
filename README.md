@@ -9,7 +9,7 @@ See https://github.com/allanchen2019/ospf-over-wireguard for more detail.
 
 ### Install standalone (amd64 & arm64):
 ```
-wget https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/AutoSetup.sh && chmod 777 ./setup.sh && sudo ./setup.sh
+wget https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/AutoSetup.sh && chmod 777 ./AutoSetup.sh && sudo ./AutoSetup.sh
 ```
 
 
