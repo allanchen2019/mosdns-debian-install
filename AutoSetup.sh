@@ -6,7 +6,7 @@ echo "克隆存储库……"
 git clone https://github.com/allanchen2019/mosdns-cn-debian-install.git /opt/mosdns-cn
 chmod 777 -R /opt/mosdns-cn
 echo "运行安装脚本……"
-bash /opt/mosdns-cn/install.sh
+bash /opt/mosdns-cn/install-mosdns.sh
 echo "--------------------"
 echo "完成！您已成功安装mosdns-cn！"
 echo "若您需要卸载，请使用“bash /opt/mosdns-cn/uninstall.sh”指令。"
