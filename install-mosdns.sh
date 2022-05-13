@@ -23,8 +23,8 @@ sed -r 's/.{8}//' google.china.conf > google.china.conf2
 sed -r 's/.{16}$//' google.china.conf2 > google.china.conf.raw.txt
 
 unzip -o mosdns-cn.zip
-#cd mosdns-cn
+# cd mosdns-cn
 ./mosdns-cn --service install --config /opt/mosdns-cn/config.yaml
 ./mosdns-cn --service start
 /bin/bash -c 'echo "0 12 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
-journalctl -f
+# journalctl -f
