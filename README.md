@@ -3,7 +3,7 @@ English | [简体中文](./README_zh-CN.md)
 A shell script installs [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) on Debian(or derivatives) Linux.
 
 ### Prerequisite
-A proper ip split tunneling for native and remote dns servers is required. 
+Proper split tunneling for China and non-China IPs are required. 
 
 See https://github.com/allanchen2019/ospf-over-wireguard for more detail.
 
