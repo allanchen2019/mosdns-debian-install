@@ -8,6 +8,5 @@ git clone https://github.com/allanchen2019/mosdns-cn-debian-install.git /opt/mos
 chmod 777 -R /opt/mosdns-cn
 echo "运行安装脚本……"
 bash /opt/mosdns-cn/install-mosdns.sh
-rm -rf ./AutoSetup.sh
-
 systemctl status mosdns-cn.service
+rm -rf ./AutoSetup.sh
