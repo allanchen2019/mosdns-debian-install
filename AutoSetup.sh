@@ -1,4 +1,6 @@
 #!/bin/bash
+set -xeuo pipefail
+clear
 
 echo "下载依赖……"
 apt update
