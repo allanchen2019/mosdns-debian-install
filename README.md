@@ -1,6 +1,6 @@
 English | [简体中文](./README_zh-CN.md)
 # mosdns-cn-debian-install
-A shell script installs [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn) on Debian(or derivatives) Linux.
+
 
 ### Prerequisite
 Proper split tunneling for China and non-China IPs are required. 
