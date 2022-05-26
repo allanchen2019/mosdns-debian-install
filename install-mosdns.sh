@@ -26,5 +26,7 @@ unzip -o mosdns-cn.zip
 # cd mosdns-cn
 ./mosdns-cn --service install --config /opt/mosdns-cn/config.yaml
 ./mosdns-cn --service start
+systemctl enable mosdns-cn.service
+
 /bin/bash -c 'echo "0 12 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
 # journalctl -f
