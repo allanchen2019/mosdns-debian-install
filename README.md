@@ -15,5 +15,5 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 
 ### Uninstall:
 ```
-bash /opt/mosdns-cn/uninstall.sh
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
 ```
