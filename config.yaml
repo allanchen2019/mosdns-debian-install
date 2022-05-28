@@ -1,7 +1,6 @@
 server_addr: ':53'
 debug: true
 blacklist_domain:
-   - 'geosite.dat:category-ads-all'
    - 'anti-ad-domains.txt'
 local_upstream:
 #  - 'tls://223.5.5.5'
