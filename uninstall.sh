@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeuo pipefail
+set -xeuo
 clear
 
 rm -rf /opt/mosdns-cn
