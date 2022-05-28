@@ -19,6 +19,5 @@ remote_upstream:
   - 'tls://8.8.4.4?enable_pipeline=true'
   - 'tls://1.1.1.1?enable_pipeline=true'
   - 'tls://1.0.0.1?enable_pipeline=true'
-
   - 'https://8.8.8.8/dns-query?enable_http3=true'
   - 'https://8.8.4.4/dns-query?enable_http3=true'
