@@ -11,5 +11,7 @@ rm /etc/systemd/system/mosdns-cn.service
 systemctl daemon-reload
 systemctl reset-failed
 
+systemctl enable systemd-resolved.service
+systemctl restart systemd-resolved.service
 
 echo "Uninstall complete."
