@@ -22,6 +22,8 @@ sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
 sed -r 's/.{8}//' google.china.conf > google.china.conf2
 sed -r 's/.{16}$//' google.china.conf2 > google.china.conf.raw.txt
 
+systemctl stop systemd-resolved.service
+systemctl disable systemd-resolved.service
 unzip -o mosdns-cn.zip
 # cd mosdns-cn
 ./mosdns-cn --service install --config /opt/mosdns-cn/config.yaml
