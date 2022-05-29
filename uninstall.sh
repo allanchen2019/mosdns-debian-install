@@ -20,4 +20,5 @@ EOF
 systemctl enable systemd-resolved.service
 systemctl restart systemd-resolved.service
 
+cd ~
 echo "Uninstall complete."
