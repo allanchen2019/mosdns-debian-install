@@ -11,7 +11,7 @@ local_ip:
   - 'chnroutes.txt'
 local_domain:
   - 'apple.china.conf.raw.txt'
-  - 'google.china.conf.raw.txt'
+#  - 'google.china.conf.raw.txt'
   - 'accelerated-domains.china.conf.raw.txt'
 local_latency: 30
 remote_upstream:
