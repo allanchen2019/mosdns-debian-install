@@ -5,8 +5,6 @@ clear
 
 cd /opt/mosdns-cn/bin || exit
 
-wget -O geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
-wget -O geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
 wget -O accelerated-domains.china.conf https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf
 wget -O apple.china.conf https://github.com/felixonmars/dnsmasq-china-list/raw/master/apple.china.conf
 wget -O google.china.conf https://github.com/felixonmars/dnsmasq-china-list/raw/master/google.china.conf
