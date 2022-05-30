@@ -1,7 +1,7 @@
 server_addr: ':53'
 debug: true
 blacklist_domain:
-   - 'anti-ad-domains.txt'
+  - 'anti-ad-domains.txt'
 local_upstream:
   - 'tls://223.5.5.5'
   - 'tls://223.6.6.6'
@@ -11,7 +11,6 @@ local_ip:
   - 'chnroutes.txt'
 local_domain:
   - 'apple.china.conf.raw.txt'
-#  - 'google.china.conf.raw.txt'
   - 'accelerated-domains.china.conf.raw.txt'
 local_latency: 30
 remote_upstream:
