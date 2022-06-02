@@ -9,7 +9,6 @@ cd /opt/mosdns-cn/bin || exit
 
 rm -rf /opt/mosdns-cn
 sed -i '/mosdns-cn/d' /etc/crontab
-cd ~
 systemctl daemon-reload
 
 rm -rf /etc/resolv.conf
@@ -20,5 +19,5 @@ EOF
 
 systemctl enable systemd-resolved.service
 systemctl restart systemd-resolved.service
-
+cd ~
 echo "Uninstall complete."
