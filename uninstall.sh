@@ -2,14 +2,13 @@
 set -xeuo
 clear
 
+mosdns-cn --service stop
+mosdns-cn --service uninstall
+
 rm -rf /opt/mosdns-cn
 sed -i '/mosdns-cn/d' /etc/crontab
-
-systemctl stop mosdns-cn.service
-systemctl disable mosdns-cn.service
-rm /etc/systemd/system/mosdns-cn.service
+cd ~
 systemctl daemon-reload
-systemctl reset-failed
 
 rm -rf /etc/resolv.conf
 cat << EOF >/etc/resolv.conf
@@ -20,5 +19,4 @@ EOF
 systemctl enable systemd-resolved.service
 systemctl restart systemd-resolved.service
 
-cd ~
 echo "Uninstall complete."
