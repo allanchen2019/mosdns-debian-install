@@ -11,5 +11,5 @@ chmod 777 -R /opt/mosdns-cn
 echo "运行安装脚本……"
 bash /opt/mosdns-cn/install-mosdns.sh
 #systemctl status mosdns-cn.service
-echo "安装完成，运行systemctl -f |grep mosdns 观察dns查询状态。"
+echo "安装完成，运行journalctl -f |grep mosdns 观察dns查询状态。"
 rm -rf ./AutoSetup.sh
