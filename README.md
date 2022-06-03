@@ -3,7 +3,7 @@ English | [简体中文](./README_zh-CN.md)
 
 
 ### Prerequisite
-# IMPORTANT ! Proper split tunneling for China and non-China IPs are required. 
+# IMPORTANT ! Require proper split IP tunneling. 
 
 See https://github.com/allanchen2019/ospf-over-wireguard for more detail.
 
