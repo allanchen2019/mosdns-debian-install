@@ -2,6 +2,13 @@
 # mosdns-cn-debian-install
 一个在Debian（或衍生版）上安装[mosdns-cn](https://github.com/IrineSistiana/mosdns-cn)的shell脚本。
 
+默认配置为中国大陆域名分流、去广告、中国Apple域名CDN加速，
+
+上游内外DNS采用DoT协议，启用query pipelining连接复用，
+
+本项目依据mosdns-cn演进有频繁小调整，~~非必要不折腾~~。
+
+
 # 重要！先决条件：需要事先为DNS服务器做好IP分流。
 
 有关更多详细信息，请参阅[此仓库](https://github.com/allanchen2019/ospf-over-wireguard)。
