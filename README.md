@@ -13,11 +13,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 ```
 
 
-### Uninstall:
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
-```
-
 ### Update resource files:
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/update-geo.sh)
@@ -26,4 +21,14 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 ### Update application binary only:
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/update-bin.sh)
+```
+
+### Reinstall:
+```
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh) && bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/AutoSetup.sh)
+```
+
+### Uninstall:
+```
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
 ```
