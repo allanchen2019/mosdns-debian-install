@@ -12,12 +12,12 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 ```
 
 
-### 升级资源文件:
+### 更新资源文件:
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/update-geo.sh)
 ```
 
-### 只升级程序可执行二进制:
+### 只更新可执行二进制:
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/update-bin.sh)
 ```
