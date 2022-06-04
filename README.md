@@ -5,7 +5,9 @@ Default configuration for mainland China domain split query, anti-ad and Apple d
 
 Upstream local and remote DNS uses DoT protocol, enabling query pipelining.
 
-The project has frequent small adjustments based on the evolution of mosdns-cn, ~~Have fun if you are brave enough~~
+The project has frequent small adjustments based on the evolution of [mosdns-cn](https://github.com/IrineSistiana/mosdns-cn), 
+
+~~Have fun if you are brave enough~~
 
 ### Prerequisite
 # IMPORTANT ! Require proper split IP tunneling. 
