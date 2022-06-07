@@ -1,5 +1,5 @@
 English | [简体中文](./README_zh-CN.md)
-# mosdns-cn-debian-install
+
 
 Default configuration for mainland China domain split query, anti-ad and Apple domain in China CDN.
 

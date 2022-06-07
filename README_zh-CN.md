@@ -1,5 +1,5 @@
 [English](./README.md) | 简体中文
-# mosdns-cn-debian-install
+
 一个在Debian（或衍生版）上安装[mosdns-cn](https://github.com/IrineSistiana/mosdns-cn)的shell脚本。
 
 默认配置为中国大陆域名分流、去广告、中国Apple域名CDN加速，
