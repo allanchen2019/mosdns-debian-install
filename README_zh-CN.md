@@ -28,12 +28,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/update-bin.sh)
 ```
-
-### 重装:
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh) && bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
-```
-
 ### 卸载:
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh)

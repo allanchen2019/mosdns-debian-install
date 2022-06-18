@@ -30,10 +30,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/update-bin.sh)
 ```
 
-### Reinstall:
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh) && bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
-```
 
 ### Uninstall:
 ```
