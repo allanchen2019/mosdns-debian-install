@@ -2,14 +2,13 @@
 set -euo pipefail
 clear
 
-echo "Downloading dependency……"
-apt update
-apt install wget git unzip pip -y
-echo "Cloning repo……"
+echo "下载依赖……"
+apt update > /dev/null 2>&1
+apt install wget git unzip pip -y > /dev/null 2>&1
+echo "克隆库……"
 git clone https://github.com/allanchen2019/mosdns-debian-install.git /opt/mosdns
 chmod 777 -R /opt/mosdns
-echo "Running……"
+echo "执行安装……"
 bash /opt/mosdns/install-mosdns.sh
-#systemctl status mosdns.service
-echo "Finished! Run journalctl -f |grep mosdns to see what happend."
+echo "安装完成!"
 rm -rf ./AutoSetup.sh

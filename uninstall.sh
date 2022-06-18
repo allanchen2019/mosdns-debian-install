@@ -7,7 +7,7 @@ cd /opt/mosdns/bin || exit
 ./mosdns -s stop
 ./mosdns -s uninstall
 
-rm -rf /opt/mosdns
+rm -rf /opt/mosdns 
 sed -i '/mosdns/d' /etc/crontab
 systemctl daemon-reload
 
@@ -20,4 +20,6 @@ EOF
 systemctl enable systemd-resolved.service
 systemctl restart systemd-resolved.service
 cd ~
-echo "#### 卸载完成 ####"
+echo "~~~~~~~~"
+echo "卸载完成"
+echo "~~~~~~~~"
