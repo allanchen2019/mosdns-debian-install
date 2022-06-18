@@ -2,8 +2,8 @@
 set -euo pipefail
 clear
 
-/opt/mosdns/bin/mosdns -s stop
-/opt/mosdns/bin/mosdns -s uninstall
+systemctl stop mosdns.service
+systemctl disable mosdns.service
 systemctl daemon-reload
 rm -rf /opt/mosdns 
 
