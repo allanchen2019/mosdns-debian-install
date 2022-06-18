@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-clear
+
 echo "~~~~~~~~~~~~~~"
 echo "更新资源文件………"
 echo "~~~~~~~~~~~~~~"
