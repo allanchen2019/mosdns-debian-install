@@ -3,11 +3,11 @@ set -xeuo pipefail
 clear
 architecture=$(dpkg --print-architecture)
 
-cd /opt/mosdns-cn || exit
+cd /opt/mosdns || exit
 mkdir bin
 cd bin || exit
 
-wget --show-progress -t 5 -T 10 -cqO mosdns-cn.zip https://github.com/IrineSistiana/mosdns-cn/releases/latest/download/mosdns-cn-linux-"$architecture".zip
+wget --show-progress -t 5 -T 10 -cqO mosdns.zip https://github.com/IrineSistiana/mosdns/releases/latest/download/mosdns-linux-"$architecture".zip
 wget --show-progress -t 5 -T 10 -cqO accelerated-domains.china.conf https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf
 wget --show-progress -t 5 -T 10 -cqO apple.china.conf https://github.com/felixonmars/dnsmasq-china-list/raw/master/apple.china.conf
 #wget --show-progress -t 5 -T 10 -cqO google.china.conf https://github.com/felixonmars/dnsmasq-china-list/raw/master/google.china.conf
@@ -28,9 +28,9 @@ systemctl stop systemd-resolved.service
 systemctl disable systemd-resolved.service
 systemctl daemon-reload
 
-unzip -o mosdns-cn.zip
-./mosdns-cn --service install --config /opt/mosdns-cn/config.yaml
-./mosdns-cn --service start
-systemctl enable mosdns-cn.service
-#/bin/bash -c 'echo "0 12 * * * root /opt/mosdns-cn/update-geo.sh" >> /etc/crontab'
+unzip -o mosdns.zip
+./mosdns -s install -c /opt/mosdns/config.yaml
+./mosdns -s start
+systemctl enable mosdns.service
+#/bin/bash -c 'echo "0 12 * * * root /opt/mosdns/update-geo.sh" >> /etc/crontab'
 

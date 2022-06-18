@@ -2,13 +2,13 @@
 set -xeuo pipefail
 clear
 
-cd /opt/mosdns-cn/bin || exit
+cd /opt/mosdns/bin || exit
 
-./mosdns-cn --service stop
-./mosdns-cn --service uninstall
+./mosdns --service stop
+./mosdns --service uninstall
 
-rm -rf /opt/mosdns-cn
-sed -i '/mosdns-cn/d' /etc/crontab
+rm -rf /opt/mosdns
+sed -i '/mosdns/d' /etc/crontab
 systemctl daemon-reload
 
 rm -rf /etc/resolv.conf
