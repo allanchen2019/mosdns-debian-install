@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeuo
+set -xeuo pipefail
 clear
 architecture=$(dpkg --print-architecture)
 cd /opt/mosdns-cn/bin || exit
