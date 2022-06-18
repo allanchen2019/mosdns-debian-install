@@ -15,26 +15,26 @@
 
 ### 独立安装 (amd64 & arm64):
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
 ```
 
 
 ### 更新资源文件:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/update-geo.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/update-geo.sh)
 ```
 
 ### 只更新可执行二进制:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/update-bin.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/update-bin.sh)
 ```
 
 ### 重装:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/uninstall.sh) && bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh) && bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
 ```
 
 ### 卸载:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/uninstall.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh)
 ```
