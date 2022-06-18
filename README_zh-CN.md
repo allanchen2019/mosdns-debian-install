@@ -1,4 +1,4 @@
-[English](./README.md) | 简体中文
+[English](./README_zh-CN.md) | 简体中文
 
 一个在Debian（或衍生版）上安装[mosdns](https://github.com/IrineSistiana/mosdns)的shell脚本。
 
