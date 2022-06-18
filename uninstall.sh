@@ -4,8 +4,8 @@ clear
 
 cd /opt/mosdns/bin || exit
 
-./mosdns --service stop
-./mosdns --service uninstall
+./mosdns -s stop
+./mosdns -s uninstall
 
 rm -rf /opt/mosdns
 sed -i '/mosdns/d' /etc/crontab

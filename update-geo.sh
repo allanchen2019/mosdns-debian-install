@@ -16,5 +16,5 @@ sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
 #sed -r 's/.{8}//' google.china.conf > google.china.conf2
 #sed -r 's/.{16}$//' google.china.conf2 > google.china.conf.raw.txt
 python3 merge_cidr.py -s apnic -s ipip > chnroutes.txt
-./mosdns --service restart
+./mosdns -s restart
 echo "#### 资源文件更新完成 ####"

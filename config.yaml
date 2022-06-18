@@ -11,12 +11,7 @@ plugin:
       server:
         - protocol: udp
           addr: ':53'
-        # - protocol: tcp
-        #   addr: ':53'
-#        - protocol: udp
-#          addr: '[::1]:53'
-#        - protocol: tcp
-#          addr: '[::1]:53'
+
   - tag: main_sequence
     type: sequence
     args:
@@ -62,26 +57,6 @@ plugin:
 #      minimal_ttl: 300
 #      maximum_ttl: 3600
 
-  # - tag: ecs-local
-  #   type: ecs
-  #   args:
-  #     auto: false #仅适用于公网的服务器。本地运行不要启用这个功能。
-  #     ipv4: xxx # IPv4 curl -s https://v4.myip.la 
-  #     # ipv6: ${{ curl -s https://v6.myip.la }} # IPv6 curl -s https://v6.myip.la
-  #     force_overwrite: true # 强制覆盖
-  #     mask4: 16 # 用于 ipv4 地址的掩码 默认: 24。
-  #     # mask6: 48 # 用于 ipv6 地址的掩码 默认: 48。
-
-  # - tag: ecs-remote
-  #   type: ecs
-  #   args:
-  #     auto: true #仅适用于公网的服务器。本地运行不要启用这个功能。
-  #     #ipv4: ${{ curl -s https://v4.myip.la }} # IPv4 curl -s https://v4.myip.la 
-  #     # ipv6: ${{ curl -s https://v6.myip.la }} # IPv6 curl -s https://v6.myip.la
-  #     force_overwrite: true # 强制覆盖
-  #     #mask4: 16 # 用于 ipv4 地址的掩码 默认: 24。
-  #     # mask6: 48 # 用于 ipv6 地址的掩码 默认: 48。
-
   - tag: forward_local
     type: fast_forward
     args:
@@ -110,11 +85,7 @@ plugin:
       domain:
         - 'ext:./accelerated-domains.china.conf.raw.txt'
         - 'ext:./apple.china.conf.raw.txt'
-  # - tag: query_is_non_local_domain
-  #   type: query_matcher
-  #   args:
-  #     domain:
-  #       - 'ext:./geosite.dat:geolocation-!cn'
+
   - tag: query_is_ad_domain
     type: query_matcher
     args:
