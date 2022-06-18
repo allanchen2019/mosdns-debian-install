@@ -38,3 +38,15 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh)
 ```
+
+### 重置DNS:
+```
+rm -rf /etc/resolv.conf
+cat << EOF >/etc/resolv.conf
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+EOF
+systemctl enable systemd-resolved.service
+systemctl restart systemd-resolved.service
+cd ~
+```
