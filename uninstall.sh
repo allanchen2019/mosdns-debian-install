@@ -6,7 +6,9 @@ echo "卸载mosdns......"
 echo "~~~~~~~~~~~~~~~~"
 systemctl stop mosdns.service
 systemctl disable mosdns.service
+rm /etc/systemd/system/mosdns.service
 systemctl daemon-reload
+systemctl reset-failed
 rm -rf /opt/mosdns 
 
 rm -rf /etc/resolv.conf
