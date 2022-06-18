@@ -1,4 +1,4 @@
-English | [简体中文](./README_zh.md)
+English | [简体中文](./README_zh-CN.md)
 
 
 Default configuration for masterland China domain split query, anti-ad and Apple domain in China CDN.
