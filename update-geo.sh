@@ -1,5 +1,7 @@
 #!/bin/bash
-#update geofile
+echo "~~~~~~~~~~~~~~"
+echo "更新资源文件………"
+echo "~~~~~~~~~~~~~~"
 set -euo pipefail
 clear
 cd /opt/mosdns/bin || exit
