@@ -1,6 +1,6 @@
 #!/bin/bash
 #update geofile
-set -xeuo pipefail
+set -euo pipefail
 clear
 cd /opt/mosdns/bin || exit
 
