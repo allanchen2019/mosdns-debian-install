@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xuo pipefail
+set -xu
 clear
 
 cd /opt/mosdns/bin || exit
