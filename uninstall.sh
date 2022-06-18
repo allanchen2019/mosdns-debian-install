@@ -2,8 +2,7 @@
 set -euo pipefail
 clear
 
-cd /opt/mosdns/bin || exit
-
+cd /opt/mosdns/bin
 ./mosdns -s stop
 ./mosdns -s uninstall
 
