@@ -25,8 +25,8 @@ systemctl disable systemd-resolved.service > /dev/null 2>&1
 systemctl daemon-reload > /dev/null 2>&1
 echo "启动mosdns……"
 unzip -o mosdns.zip > /dev/null 2>&1
-./mosdns -s install -c /opt/mosdns/config.yaml
-./mosdns -s start
+./mosdns -s install -c /opt/mosdns/config.yaml > /dev/null 2>&1
+./mosdns -s start > /dev/null 2>&1
 systemctl enable mosdns.service
 
 
