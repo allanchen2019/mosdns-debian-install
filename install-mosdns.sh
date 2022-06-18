@@ -5,7 +5,7 @@ architecture=$(dpkg --print-architecture)
 cd /opt/mosdns || exit
 mkdir bin
 cd bin || exit
-echo "下载域名表......"
+echo "下载域名表……"
 wget --show-progress -t 5 -T 10 -cqO mosdns.zip https://github.com/IrineSistiana/mosdns/releases/latest/download/mosdns-linux-"$architecture".zip
 wget --show-progress -t 5 -T 10 -cqO accelerated-domains.china.conf https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf
 wget --show-progress -t 5 -T 10 -cqO apple.china.conf https://github.com/felixonmars/dnsmasq-china-list/raw/master/apple.china.conf
@@ -17,14 +17,14 @@ sed -r 's/.{8}//' apple.china.conf > apple.china.conf2
 sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
 
 python3 -m pip install netaddr requests > /dev/null 2>&1
-echo "生成cnip......"
+echo "生成cnip……"
 python3 merge_cidr.py -s apnic -s ipip > chnroutes.txt
-
-systemctl stop systemd-resolved.service
-systemctl disable systemd-resolved.service
-systemctl daemon-reload
-
-unzip -o mosdns.zip
+echo "停用systemd-resolved……"
+systemctl stop systemd-resolved.service > /dev/null 2>&1
+systemctl disable systemd-resolved.service > /dev/null 2>&1
+systemctl daemon-reload > /dev/null 2>&1
+echo "启动mosdns……"
+unzip -o mosdns.zip > /dev/null 2>&1
 ./mosdns -s install -c /opt/mosdns/config.yaml
 ./mosdns -s start
 systemctl enable mosdns.service

@@ -14,5 +14,5 @@ sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
 python3 merge_cidr.py -s apnic -s ipip > chnroutes.txt 
 ./mosdns -s restart
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "#### 资源文件更新完成 ####"
+echo "……………资源文件更新完成……………"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~"

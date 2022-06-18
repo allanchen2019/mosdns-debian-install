@@ -8,5 +8,5 @@ wget --show-progress -t 5 -T 10 -cqO mosdns.zip https://github.com/IrineSistiana
 unzip -o *.zip
 ./mosdns -s restart
 echo "~~~~~~~~~~~~~~~~~~~~~"
-echo "#### 程序更新完成 ####"
+echo "……………程序更新完成……………"
 echo "~~~~~~~~~~~~~~~~~~~~~"

@@ -19,7 +19,7 @@ if systemctl status mosdns.service |grep -q "running"; then
         echo "~~~~~~~~~~~~~~~~~~~~~~"
     else
         echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        echo "Emm...好像哪里不太对，mosdns没运行..."
+        echo "Emm………好像哪里不太对，mosdns没运行………"
         echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 fi
 rm -rf ./AutoSetup.sh
