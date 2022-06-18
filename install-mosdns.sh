@@ -16,7 +16,7 @@ sed -r 's/.{16}$//' accelerated-domains.china.conf2 > accelerated-domains.china.
 sed -r 's/.{8}//' apple.china.conf > apple.china.conf2
 sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
 
-python3 -m pip install netaddr requests
+python3 -m pip install netaddr requests > /dev/null 2>&1
 echo "生成cnip......"
 python3 merge_cidr.py -s apnic -s ipip > chnroutes.txt
 
