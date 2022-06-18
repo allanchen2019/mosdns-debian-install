@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -xu
+#set -u
 clear
 echo "~~~~~~~~~~~~~~~~"
 echo "卸载mosdns......"
