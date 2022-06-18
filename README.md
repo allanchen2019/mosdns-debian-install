@@ -36,7 +36,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh)
 ```
 
-### Reset DNS:
+### Reset DNS if install failed:
 ```
 rm -rf /etc/resolv.conf
 cat << EOF >/etc/resolv.conf
