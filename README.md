@@ -1,9 +1,9 @@
 English | [简体中文](./README_zh-CN.md)
 
 
-Default configuration for masterland China domain split query, anti-ad and Apple domain in China CDN.
+Default configuration for Mainland China domain split query, anti-ad and Apple domain in China CDN.
 
-Upstream local and remote DNS uses DoT protocol, enabling query pipelining.
+Upstream local and remote DNS uses DoT protocol, query pipelining enabled.
 
 The project has frequent small adjustments based on the evolution of [mosdns](https://github.com/IrineSistiana/mosdns), 
 
