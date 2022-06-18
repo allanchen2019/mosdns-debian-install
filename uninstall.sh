@@ -1,7 +1,9 @@
 #!/bin/bash
-set -euo pipefail
+set -u
 clear
-
+echo "~~~~~~~~~~~~~~~~"
+echo "卸载mosdns......"
+echo "~~~~~~~~~~~~~~~~"
 systemctl stop mosdns.service
 systemctl disable mosdns.service
 systemctl daemon-reload
@@ -17,5 +19,5 @@ systemctl enable systemd-resolved.service
 systemctl restart systemd-resolved.service
 cd ~
 echo "~~~~~~~~"
-echo "卸载完成"
+echo "卸载完成!"
 echo "~~~~~~~~"
