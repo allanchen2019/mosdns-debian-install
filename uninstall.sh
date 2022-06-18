@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeuo
+set -xeuo pipefail
 clear
 
 cd /opt/mosdns-cn/bin || exit
