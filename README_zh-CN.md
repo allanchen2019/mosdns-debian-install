@@ -33,7 +33,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh)
 ```
 
-### 重置DNS:
+### 如不能正常安装，请先重置DNS:
 ```
 rm -rf /etc/resolv.conf
 cat << EOF >/etc/resolv.conf
