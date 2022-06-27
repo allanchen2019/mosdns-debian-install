@@ -4,16 +4,16 @@ log:
 
 data_providers:
   - tag: cn_domain
-    file: ./accelerated-domains.china.conf.raw.txt
+    file: accelerated-domains.china.conf.raw.txt
   - tag: apple_domain
-    file: ./apple.china.conf.raw.txt
+    file: apple.china.conf.raw.txt
     auto_reload: true
   - tag: cn_ip
     file: /chnroutes.txt
     auto_reload: true
 
   - tag: ad_domain
-    file: ./anti-ad-domains.txt
+    file: anti-ad-domains.txt
     auto_reload: true
 plugins:
   # 缓存
