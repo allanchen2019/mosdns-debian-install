@@ -2,6 +2,8 @@
 
 一个在Debian（或衍生版）上安装[mosdns](https://github.com/IrineSistiana/mosdns)的shell脚本。
 
+2022-6-28更新：尝试兼容mosdns v4,早期阶段上游更新频繁，不一定追得上（
+
 默认配置为中国大陆域名分流、去广告、中国Apple域名CDN加速，
 
 上游内外DNS采用DoT协议，启用query pipelining连接复用，

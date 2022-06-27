@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -xeuo pipefail
 architecture=$(dpkg --print-architecture)
 
 cd /opt/mosdns || exit
@@ -25,8 +25,8 @@ systemctl disable systemd-resolved.service > /dev/null 2>&1
 systemctl daemon-reload > /dev/null 2>&1
 echo "启动mosdns……"
 unzip -o mosdns.zip > /dev/null 2>&1
-./mosdns -s install -c /opt/mosdns/config.yaml > /dev/null 2>&1
-./mosdns -s start > /dev/null 2>&1
+./mosdns service install -c /opt/mosdns/config-v4.yaml > /dev/null 2>&1
+./mosdns service start > /dev/null 2>&1
 systemctl enable mosdns.service
 
 
