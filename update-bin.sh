@@ -10,7 +10,7 @@ cd /opt/mosdns/bin || exit
 rm -rf mosdns*
 wget --show-progress -t 5 -T 10 -cqO mosdns.zip https://github.com/IrineSistiana/mosdns/releases/latest/download/mosdns-linux-"$architecture".zip
 unzip -o *.zip > /dev/null 2>&1
-./mosdns -s restart > /dev/null 2>&1
+./mosdns service restart > /dev/null 2>&1
 if systemctl status mosdns.service |grep -q "running"; then
         echo "~~~~~~~~~~~~~~~~"
         echo "程序文件更新完成！"

@@ -3,7 +3,10 @@ English | [简体中文](./README_zh-CN.md)
 
 Default configuration for Mainland China domain split query, anti-ad and Apple domain in China CDN.
 
-2022-6-28 UPDATE: Attempt to adapt mosdns v4
+2022-6-28 UPDATE: Attempt to adapt mosdns v4.
+
+For update to v4, first uninstall then install.
+
 
 Upstream local and remote DNS uses DoT protocol, query pipelining enabled.
 
