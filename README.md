@@ -7,6 +7,7 @@ Default configuration for Mainland China domain split query, anti-ad and Apple d
 
 For update to v4, first uninstall then install.
 
+NOTE：The previous mosdns-cn is in "main" branch.
 
 Upstream local and remote DNS uses DoT protocol, query pipelining enabled.
 
