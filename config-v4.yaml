@@ -10,17 +10,17 @@ data_providers:
     file: apple.china.conf.raw.txt
     auto_reload: true
   - tag: cn_ip
-    file: /chnroutes.txt
+    file: chnroutes.txt
     auto_reload: true
   - tag: ad_domain
     file: anti-ad-domains.txt
     auto_reload: true
-plugins:
-  # 缓存
-  - tag: cache
-    type: cache
-    args:
-      size: 1024
+# plugins:
+#   # 缓存
+#   - tag: cache
+#     type: cache
+#     args:
+#       size: 1024
 
   # 转发至本地服务器的插件
   - tag: forward_local
@@ -125,6 +125,6 @@ servers:
   - exec: main_sequence
     listeners:
       - protocol: udp
-        addr: 0.0.0.0:53
+        addr: :53
       - protocol: tcp
-        addr: 0.0.0.0:53
+        addr: :53
