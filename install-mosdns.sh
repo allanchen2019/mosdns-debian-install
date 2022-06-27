@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeuo pipefail
+set -euo pipefail
 architecture=$(dpkg --print-architecture)
 
 cd /opt/mosdns || exit
