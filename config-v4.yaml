@@ -5,6 +5,7 @@ log:
 data_providers:
   - tag: cn_domain
     file: ./accelerated-domains.china.conf.raw.txt
+  - tag: apple_domain
     file: ./apple.china.conf.raw.txt
     auto_reload: true
   - tag: cn_ip
@@ -51,7 +52,7 @@ plugins:
     args:
       domain:
         - 'provider:cn_domain'
-
+        - 'provider:apple_domain'
   # 匹配非本地域名的插件
   # - tag: query_is_non_local_domain
   #   type: query_matcher
