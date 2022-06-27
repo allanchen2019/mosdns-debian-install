@@ -1,6 +1,6 @@
 #!/bin/bash
-set -euo pipefail
 clear
+set -euo pipefail
 echo "~~~~~~~~~~"
 echo "安装mosdns"
 echo "~~~~~~~~~~"
