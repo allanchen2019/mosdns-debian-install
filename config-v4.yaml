@@ -11,9 +11,9 @@ data_providers:
   - tag: cn_ip
     file: chnroutes.txt
     auto_reload: true
-  - tag: ad_domain
-    file: anti-ad-domains.txt
-    auto_reload: true
+  # - tag: ad_domain
+  #   file: anti-ad-domains.txt
+  #   auto_reload: true
 plugins: 
   - tag: forward_local
     type: fast_forward
@@ -41,11 +41,11 @@ plugins:
       domain:
         - 'provider:cn_domain'
         - 'provider:apple_domain'
-  - tag: query_is_ad_domain
-    type: query_matcher
-    args:
-      domain:
-        - 'provider:ad_domain'
+  # - tag: query_is_ad_domain
+  #   type: query_matcher
+  #   args:
+  #     domain:
+  #       - 'provider:ad_domain'
   - tag: response_has_local_ip
     type: response_matcher
     args:
@@ -55,10 +55,11 @@ plugins:
     type: sequence
     args:
       exec:
-        - if: query_is_ad_domain
-          exec:
-            - _new_nxdomain_response
-            - _return
+        - _misc_optm
+        # - if: query_is_ad_domain
+        #   exec:
+        #     - _new_nxdomain_response
+        #     - _return
         - if: query_is_local_domain
           exec:
             - forward_local
@@ -71,11 +72,9 @@ plugins:
           secondary:
             - _prefer_ipv4
             - forward_remote
-          fast_fallback: 30
+          fast_fallback: 300
 servers:
   - exec: main_sequence
     listeners:
       - protocol: udp
-        addr: ':53'
-      - protocol: tcp
         addr: ':53'
