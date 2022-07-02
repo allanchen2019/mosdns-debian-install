@@ -26,6 +26,12 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
 ```
 
+可选：编辑定时任务，每天7:00更新各种列表，crontab -e后添加：
+
+```
+0 7 * * * bash /opt/mosdns/update-geo.sh  >> /var/log/cron.log 2>&1
+```
+保存退出。
 
 ### 更新资源文件:
 ```
