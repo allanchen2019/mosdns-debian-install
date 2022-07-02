@@ -5,9 +5,14 @@ Default configuration for Mainland China domain split query, anti-ad and Apple d
 
 2022-6-28 UPDATE: Attempt to adapt mosdns v4.
 
-For update to v4, first uninstall then install.
-
 NOTE：The previous mosdns-cn is in "main" branch.
+For update to v4, first uninstall mosdns-cn:
+
+```
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
+```
+
+
 
 Upstream local and remote DNS uses DoT protocol, query pipelining enabled.
 

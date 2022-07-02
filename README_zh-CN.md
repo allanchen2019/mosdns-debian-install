@@ -4,7 +4,11 @@
 
 2022-6-28更新：尝试兼容mosdns v4,早期阶段上游更新频繁，不一定追得上（
 
-注意：如更新v4先执行卸载再安装，main分支为mosdns-cn，卸载需用对应脚本。
+注意：如更新v4先执行卸载再安装，main分支为mosdns-cn，卸载需用对应脚本:
+
+```
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
+```
 
 默认配置为中国大陆域名分流、去广告、中国Apple域名CDN加速，
 

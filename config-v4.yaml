@@ -11,9 +11,9 @@ data_providers:
   - tag: cn_ip
     file: chnroutes.txt
     auto_reload: true
-  # - tag: ad_domain
-  #   file: anti-ad-domains.txt
-  #   auto_reload: true
+  - tag: ad_domain
+    file: reject-list.txt
+    auto_reload: true
 plugins: 
   - tag: forward_local
     type: fast_forward
@@ -41,11 +41,11 @@ plugins:
       domain:
         - 'provider:cn_domain'
         - 'provider:apple_domain'
-  # - tag: query_is_ad_domain
-  #   type: query_matcher
-  #   args:
-  #     domain:
-  #       - 'provider:ad_domain'
+  - tag: query_is_ad_domain
+    type: query_matcher
+    args:
+      domain:
+        - 'provider:ad_domain'
   - tag: response_has_local_ip
     type: response_matcher
     args:
@@ -56,10 +56,10 @@ plugins:
     args:
       exec:
         - _misc_optm
-        # - if: query_is_ad_domain
-        #   exec:
-        #     - _new_nxdomain_response
-        #     - _return
+        - if: query_is_ad_domain
+          exec:
+            - _new_nxdomain_response
+            - _return
         - if: query_is_local_domain
           exec:
             - forward_local
