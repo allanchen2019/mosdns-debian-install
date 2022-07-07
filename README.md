@@ -30,7 +30,7 @@ See https://github.com/allanchen2019/ospf-over-wireguard for more detail.
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
 ```
 
-### For auto-update resource files, `crontab -e` and add the following line:
+### For auto-update resource files at 7:00 every day, `crontab -e` and add the following line:
 ```
 0 7 * * * bash /opt/mosdns/update-geo.sh  >> /var/log/cron.log 2>&1
 ```
