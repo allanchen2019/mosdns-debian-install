@@ -1,6 +1,6 @@
 log:
   level: debug
-  file: ''
+  file: ""
 data_providers:
   - tag: cn_domain
     file: accelerated-domains.china.conf.raw.txt
@@ -8,73 +8,65 @@ data_providers:
   - tag: apple_domain
     file: apple.china.conf.raw.txt
     auto_reload: true
-  - tag: cn_ip
-    file: chnroutes.txt
-    auto_reload: true
   - tag: ad_domain
     file: reject-list.txt
     auto_reload: true
-plugins: 
+plugins:
+  - tag: _default_cache
   - tag: forward_local
     type: fast_forward
     args:
       upstream:
-        - addr: 'tls://1.12.12.12'
+        - addr: "tls://1.12.12.12"
           enable_pipeline: true
-        - addr: 'tls://120.53.53.53'
+        - addr: "tls://120.53.53.53"
           enable_pipeline: true
   - tag: forward_remote
     type: fast_forward
     args:
       upstream:
-        - addr: 'tls://8.8.8.8'
+        - addr: "tls://8.8.8.8"
           enable_pipeline: true
-        - addr: 'tls://8.8.4.4'
+        - addr: "tls://8.8.4.4"
           enable_pipeline: true
-        - addr: 'tls://1.1.1.1'
+        - addr: "tls://1.1.1.1"
           enable_pipeline: true
-        - addr: 'tls://1.0.0.1'
+        - addr: "tls://1.0.0.1"
           enable_pipeline: true
   - tag: query_is_local_domain
     type: query_matcher
     args:
       domain:
-        - 'provider:cn_domain'
-        - 'provider:apple_domain'
+        - "provider:cn_domain"
+        - "provider:apple_domain"
   - tag: query_is_ad_domain
     type: query_matcher
     args:
       domain:
-        - 'provider:ad_domain'
-  - tag: response_has_local_ip
-    type: response_matcher
-    args:
-      ip:
-        - 'provider:cn_ip'
+        - "provider:ad_domain"
   - tag: main_sequence
     type: sequence
     args:
       exec:
         - _misc_optm
+        - _default_cache
         - if: query_is_ad_domain
           exec:
             - _new_nxdomain_response
             - _return
         - if: query_is_local_domain
           exec:
+            - _prefer_ipv4
             - forward_local
             - _return
-        - primary:
-            - forward_local
-            - if: '(! response_has_local_ip) && [_response_valid_answer]'
-              exec:
-                - _drop_response
-          secondary:
+          else_exec:
             - _prefer_ipv4
             - forward_remote
-          fast_fallback: 300
 servers:
   - exec: main_sequence
     listeners:
       - protocol: udp
-        addr: ':53'
+        addr: ":53"
+
+api:
+  http: ":8008"

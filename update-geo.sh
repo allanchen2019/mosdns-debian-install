@@ -13,7 +13,7 @@ sed -r 's/.{8}//' accelerated-domains.china.conf > accelerated-domains.china.con
 sed -r 's/.{16}$//' accelerated-domains.china.conf2 > accelerated-domains.china.conf.raw.txt
 sed -r 's/.{8}//' apple.china.conf > apple.china.conf2
 sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
-python3 merge_cidr.py -s apnic -s ipip > chnroutes.txt 
+#python3 merge_cidr.py -s apnic -s ipip > chnroutes.txt 
 ./mosdns service restart > /dev/null 2>&1
 
 if systemctl status mosdns.service |grep -q "running"; then
