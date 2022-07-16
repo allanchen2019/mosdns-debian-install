@@ -1,6 +1,6 @@
 log:
   level: debug
-  file: ""
+  file: "/var/log/mosdns.log"
 data_providers:
   - tag: cn_domain
     file: accelerated-domains.china.conf.raw.txt
@@ -25,14 +25,14 @@ plugins:
     type: fast_forward
     args:
       upstream:
-        - addr: "tls://8.8.8.8"
-          enable_pipeline: true
-        - addr: "tls://8.8.4.4"
-          enable_pipeline: true
-        - addr: "tls://1.1.1.1"
-          enable_pipeline: true
-        - addr: "tls://1.0.0.1"
-          enable_pipeline: true
+        - addr: "https://8.8.8.8/dns-query"
+          dial_addr: "8.8.8.8"
+          enable_http3: true
+        - addr: "https://8.8.4.4/dns-query"
+          dial_addr: "8.8.4.4"
+          enable_http3: true
+
+
   - tag: query_is_local_domain
     type: query_matcher
     args:
