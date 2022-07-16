@@ -14,7 +14,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 
 
 
-Upstream local and remote DNS uses DoT protocol, query pipelining enabled.
+Upstream local and remote DNS uses DoT & DOH protocol with query pipelining & HTTP3 enabled.
 
 The project has frequent small adjustments based on the evolution of [mosdns](https://github.com/IrineSistiana/mosdns), 
 
