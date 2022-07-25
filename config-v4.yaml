@@ -8,9 +8,7 @@ data_providers:
   - tag: apple_domain
     file: apple.china.conf.raw.txt
     auto_reload: true
-  - tag: ad_domain
-    file: reject-list.txt
-    auto_reload: true
+
 plugins:
   - tag: _default_cache
   - tag: forward_local
@@ -20,6 +18,10 @@ plugins:
         - addr: "tls://1.12.12.12"
           enable_pipeline: true
         - addr: "tls://120.53.53.53"
+          enable_pipeline: true
+        - addr: "tls://223.5.5.5"
+          enable_pipeline: true
+        - addr: "tls://223.6.6.6"
           enable_pipeline: true
   - tag: forward_remote
     type: fast_forward
@@ -31,7 +33,10 @@ plugins:
         - addr: "https://8.8.4.4/dns-query"
           dial_addr: "8.8.4.4"
           enable_http3: true
-
+        - addr: "tls://1.1.1.1"
+          enable_pipeline: true
+        - addr: "tls://1.0.0.1"
+          enable_pipeline: true
 
   - tag: query_is_local_domain
     type: query_matcher
@@ -39,21 +44,13 @@ plugins:
       domain:
         - "provider:cn_domain"
         - "provider:apple_domain"
-  - tag: query_is_ad_domain
-    type: query_matcher
-    args:
-      domain:
-        - "provider:ad_domain"
+
   - tag: main_sequence
     type: sequence
     args:
       exec:
         - _misc_optm
         - _default_cache
-        - if: query_is_ad_domain
-          exec:
-            - _new_nxdomain_response
-            - _return
         - if: query_is_local_domain
           exec:
             - _prefer_ipv4
@@ -62,6 +59,7 @@ plugins:
           else_exec:
             - _prefer_ipv4
             - forward_remote
+
 servers:
   - exec: main_sequence
     listeners:
