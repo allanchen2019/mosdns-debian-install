@@ -1,7 +1,7 @@
 English | [简体中文](./README_zh-CN.md)
 
 
-Default configuration for Mainland China domain split query, anti-ad and Apple domain in China CDN.
+Default configuration for Mainland China domain split query, ~~anti-ad~~ and Apple domain in China CDN.
 
 2022-6-28 UPDATE: Attempt to adapt mosdns v4.
 

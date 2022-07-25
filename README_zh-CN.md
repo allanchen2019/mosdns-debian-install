@@ -10,9 +10,9 @@
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
 ```
 
-默认配置为中国大陆域名分流、去广告、中国Apple域名CDN加速，
+默认配置为中国大陆域名分流、~~去广告~~中国Apple域名CDN加速，
 
-上游内DNS采用DoT协议启用query pipelining，外采用DoH启用HTTP3。
+上游内DNS采用DoT协议启用query pipelining，DoH启用HTTP3。
 
 本项目依据mosdns演进有频繁小调整，~~非必要不折腾~~。
 
