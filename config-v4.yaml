@@ -65,6 +65,8 @@ servers:
     listeners:
       - protocol: udp
         addr: ":53"
+      - protocol: tcp
+        addr: ":53"
 
 api:
-  http: ":8008"
+  http: ":8000"
