@@ -10,7 +10,7 @@ data_providers:
     auto_reload: true
 
 plugins:
-  - tag: _default_cache
+  #  - tag: _default_cache
   - tag: forward_local
     type: fast_forward
     args:
@@ -52,7 +52,7 @@ plugins:
     args:
       exec:
         - _misc_optm
-        - _default_cache
+        # - _default_cache
         - if: query_is_local_domain
           exec:
             - _prefer_ipv4
