@@ -1,0 +1,62 @@
+log:
+  level: debug
+  production: true
+
+plugins:
+  - tag: "direct_domain"
+    type: domain_set
+    args:
+      files:
+        - "./accelerated-domains.china.txt"
+        - "./apple.china.conf.raw.txt"
+
+  - tag: "remote_forward"
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "1.1.1.1"
+        - addr: "8.8.8.8"
+
+  - tag: "local_forward"
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "223.5.5.5"
+        - addr: "119.29.29.29"
+
+  - tag: "local_sequence"
+    type: sequence
+    args:
+      - exec: query_summary local_forward
+      - exec: $local_forward
+
+
+  # - tag: "drop_sequence"
+  #   type: sequence
+  #   args:
+  #     - exec: drop_resp
+  #     - exec: goto local_sequence
+
+  - tag: "remote_sequence"
+    type: sequence
+    args:
+      - exec: query_summary remote_forward
+      - exec: $remote_forward
+      # - matches: "resp_ip $direct_ip"
+      #   exec: goto drop_sequence
+
+
+  - tag: "main_sequence"
+    type: sequence
+    args:
+      - exec: prefer_ipv4
+      - matches: "qname $direct_domain"
+        exec: goto local_sequence
+      - exec: goto remote_sequence
+
+  - type: udp_server
+    args:
+      entry: main_sequence
+      listen: :53
