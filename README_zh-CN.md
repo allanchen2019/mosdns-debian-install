@@ -2,19 +2,7 @@
 
 一个在Debian（或衍生版）上安装[mosdns](https://github.com/IrineSistiana/mosdns)的shell脚本。
 
-2022-6-28更新：尝试兼容mosdns v4,早期阶段上游更新频繁，不一定追得上（
-
-注意：如更新v4先执行卸载再安装，main分支为mosdns-cn，卸载需用对应脚本:
-
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian-install/main/uninstall.sh)
-```
-
-默认配置为中国大陆域名分流、~~去广告~~中国Apple域名CDN加速，
-
-上游内DNS采用DoT协议启用query pipelining，DoH启用HTTP3。
-
-本项目依据mosdns演进有频繁小调整，~~非必要不折腾~~。
+2023-3-19更新：兼容V5，要安装之前的就砍掉重练吧。
 
 
 # 重要！先决条件：需要事先为DNS服务器做好IP分流。
@@ -23,7 +11,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-cn-debian
 
 ### 独立安装 (amd64 & arm64):
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/AutoSetup.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/AutoSetup.sh)
 ```
 
 ### 可选：每天7:00自动更新各种列表，`crontab -e` 后添加：
@@ -35,16 +23,16 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 
 ### 更新资源文件:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/update-geo.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/update-geo.sh)
 ```
 
 ### 只更新可执行二进制:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/update-bin.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/update-bin.sh)
 ```
 ### 卸载:
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/master/uninstall.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/uninstall.sh)
 ```
 
 ### 如不能正常安装，请先重置DNS:

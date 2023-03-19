@@ -1,13 +1,13 @@
 log:
   level: debug
-  production: true
+  #production: true
 
 plugins:
   - tag: "direct_domain"
     type: domain_set
     args:
       files:
-        - "./accelerated-domains.china.txt"
+        - "./accelerated-domains.china.conf.raw.txt"
         - "./apple.china.conf.raw.txt"
 
   - tag: "remote_forward"
@@ -32,21 +32,11 @@ plugins:
       - exec: query_summary local_forward
       - exec: $local_forward
 
-
-  # - tag: "drop_sequence"
-  #   type: sequence
-  #   args:
-  #     - exec: drop_resp
-  #     - exec: goto local_sequence
-
   - tag: "remote_sequence"
     type: sequence
     args:
       - exec: query_summary remote_forward
       - exec: $remote_forward
-      # - matches: "resp_ip $direct_ip"
-      #   exec: goto drop_sequence
-
 
   - tag: "main_sequence"
     type: sequence
