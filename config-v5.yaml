@@ -1,6 +1,6 @@
 log:
   level: debug
-  #production: true
+  production: true
 
 plugins:
   - tag: "direct_domain"
