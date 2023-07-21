@@ -49,7 +49,7 @@ plugins:
   - tag: "main_sequence"
     type: sequence
     args:
-      - exec: prefer_ipv4
+#      - exec: prefer_ipv4
       - matches: "qname $direct_domain"
         exec: goto local_sequence
       - exec: goto remote_sequence
