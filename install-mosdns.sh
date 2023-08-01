@@ -15,13 +15,13 @@ sed -r 's/.{8}//' apple.china.conf > apple.china.conf2
 sed -r 's/.{16}$//' apple.china.conf2 > apple.china.conf.raw.txt
 
 echo "停用systemd-resolved……"
-systemctl stop systemd-resolved.service > /dev/null 2>&1
-systemctl disable systemd-resolved.service > /dev/null 2>&1
-systemctl daemon-reload > /dev/null 2>&1
+systemctl stop systemd-resolved.service
+systemctl disable systemd-resolved.service
+systemctl daemon-reload
 echo "启动mosdns……"
-unzip -o mosdns.zip > /dev/null 2>&1
-./mosdns service install -c /opt/mosdns/config-v5.yaml > /dev/null 2>&1
-./mosdns service start > /dev/null 2>&1
+unzip -o mosdns.zip
+./mosdns service install -c /opt/mosdns/config-v5.yaml
+./mosdns service start
 systemctl enable mosdns.service
 
 
