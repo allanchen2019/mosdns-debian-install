@@ -16,8 +16,8 @@ plugins:
       concurrent: 2
       upstreams:
         - addr: "1.1.1.1"
-          #- addr: "1.0.0.1"
-        - addr: "8.8.8.8"
+        - addr: "1.0.0.1"
+        #- addr: "8.8.8.8"
           #- addr: "8.8.4.4"
 
   - tag: "local_forward"
