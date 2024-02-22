@@ -15,24 +15,30 @@ plugins:
     args:
       concurrent: 2
       upstreams:
-        - addr: "1.1.1.1"
-        - addr: "1.0.0.1"
-        #- addr: "8.8.8.8"
-          #- addr: "8.8.4.4"
+        - addr: "https://1.1.1.1/dns-query"
+          enable_http3: true
+          enable_pipeline: true
+          dial_addr: "1.1.1.1"
+
+        - addr: "https://1.0.0.1/dns-query"
+          enable_http3: true
+          enable_pipeline: true
+          dial_addr: "1.0.0.1"
 
   - tag: "local_forward"
     type: forward
     args:
       concurrent: 2
       upstreams:
-        - addr: "tls://1.12.12.12"
+        - addr: "https://223.5.5.5/dns-query"
+          enable_http3: true
           enable_pipeline: true
-        - addr: "tls://223.5.5.5"
+          dial_addr: "223.5.5.5"
+
+        - addr: "https://223.6.6.6/dns-query"
+          enable_http3: true
           enable_pipeline: true
-            #        - addr: "tls://120.53.53.53"
-            #          enable_pipeline: true
-            #        - addr: "tls://223.6.6.6"
-            #          enable_pipeline: true
+          dial_addr: "223.6.6.6"
 
   - tag: "local_sequence"
     type: sequence
