@@ -15,15 +15,8 @@ plugins:
     args:
       concurrent: 2
       upstreams:
-        - addr: "https://1.1.1.1/dns-query"
-          enable_http3: true
-          enable_pipeline: true
-          dial_addr: "1.1.1.1"
-
-        - addr: "https://1.0.0.1/dns-query"
-          enable_http3: true
-          enable_pipeline: true
-          dial_addr: "1.0.0.1"
+        - addr: "1.1.1.1"
+        - addr: "1.0.0.1"
 
   - tag: "local_forward"
     type: forward
