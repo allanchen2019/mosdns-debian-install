@@ -21,7 +21,7 @@ plugins:
   - tag: "local_forward"
     type: forward
     args:
-      concurrent: 2
+      concurrent: 4
       upstreams:
         - addr: "https://223.5.5.5/dns-query"
           enable_http3: true
@@ -32,6 +32,16 @@ plugins:
           enable_http3: true
           enable_pipeline: true
           dial_addr: "223.6.6.6"
+        
+        - addr: "https://1.12.12.12/dns-query"
+          #enable_http3: true
+          enable_pipeline: true
+          dial_addr: "1.12.12.12"
+        
+        - addr: "https://120.53.53.53/dns-query"
+          #enable_http3: true
+          enable_pipeline: true
+          dial_addr: "120.53.53.53"
 
   - tag: "local_sequence"
     type: sequence
