@@ -1,12 +1,16 @@
 #!/bin/bash
-# Description: Automated, verified update script for MosDNS resource files
+# Description: Automated, verified, isolated update script for MosDNS resource files
 # Author: Antigravity
-# Date: 2026-05-21
+# Date: 2026-05-22
 
 set -euo pipefail
 
-MOSDNS_BIN_DIR="/opt/mosdns/bin"
-BACKUP_DIR="${MOSDNS_BIN_DIR}/backup"
+# 1. Anchoring working directory (prevent cron PWD issues)
+cd "$(dirname "$0")"
+
+MOSDNS_DIR="/opt/mosdns"
+MOSDNS_BIN_DIR="${MOSDNS_DIR}/bin"
+BACKUP_DIR="${MOSDNS_BIN_DIR}/backup-geo" # Isolated backup dir to prevent collision with bin backup
 TEMP_DIR=$(mktemp -d)
 
 # Cleanup on exit
@@ -25,7 +29,7 @@ URL_APPLE_CN="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/rel
 URL_PROXY_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt"
 URL_GEOIP_CN="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt"
 
-# 1. Download files to temporary directory with retries and timeout
+# 2. Download files to temporary directory with retries and timeout
 download_file() {
     local url=$1
     local dest=$2
@@ -45,12 +49,12 @@ if ! download_file "${URL_CHINA_LIST}" "${TEMP_DIR}/china-list.txt" || \
     exit 1
 fi
 
-# 2. Process GeoIP list (split CN IP into IPv4 and IPv6)
+# 3. Process GeoIP list (split CN IP into IPv4 and IPv6)
 echo "Processing China IP list..."
 grep -v ':' "${TEMP_DIR}/cn.txt" > "${TEMP_DIR}/cn_ipv4.txt" || true
 grep ':' "${TEMP_DIR}/cn.txt" > "${TEMP_DIR}/cn_ipv6.txt" || true
 
-# 3. Validate files to prevent empty/corrupted files from breaking MosDNS
+# 4. Validate files to prevent empty/corrupted files from breaking MosDNS
 validate_file() {
     local file=$1
     local min_lines=$2
@@ -85,7 +89,7 @@ fi
 
 echo "All files validated successfully."
 
-# 4. Prepare backup of current files
+# 5. Prepare backup of current files in isolated backup-geo directory
 mkdir -p "${BACKUP_DIR}"
 declare -a FILES=("china-list.txt" "apple-cn.txt" "proxy-list.txt" "cn_ipv4.txt" "cn_ipv6.txt")
 
@@ -95,7 +99,7 @@ for file in "${FILES[@]}"; do
     fi
 done
 
-# 5. Atomic deploy (copy verified files to production directory)
+# 6. Atomic deploy (copy verified files to production directory)
 echo "Deploying new resource files..."
 for file in "${FILES[@]}"; do
     cp "${TEMP_DIR}/${file}" "${MOSDNS_BIN_DIR}/${file}"
@@ -104,10 +108,9 @@ done
 # Set permissions
 chmod 644 "${MOSDNS_BIN_DIR}"/*.txt
 
-# 6. Restart service and verify runtime status
+# 7. Restart service and verify runtime status
 echo "Restarting mosdns service..."
 if systemctl restart mosdns.service; then
-    # Wait 2 seconds and check if it is still running
     sleep 2
     if systemctl is-active --quiet mosdns.service; then
         echo "=========================================="
@@ -119,7 +122,7 @@ if systemctl restart mosdns.service; then
     fi
 fi
 
-# 7. Rollback if service fails to start
+# 8. Rollback if service fails to start
 echo "==========================================" >&2
 echo "WARNING: MosDNS failed to start with new files! Rolling back..." >&2
 echo "==========================================" >&2
@@ -134,4 +137,5 @@ done
 
 systemctl restart mosdns.service
 echo "Rollback completed. MosDNS restored to previous working state." >&2
+rm -rf "${BACKUP_DIR}"
 exit 1

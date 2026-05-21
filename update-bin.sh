@@ -1,16 +1,20 @@
 #!/bin/bash
-# Description: Fully atomic, verified, self-healing update script for MosDNS binary
+# Description: Fully atomic, verified, self-healing, paths-safe update script for MosDNS binary
 # Author: Antigravity
 # Date: 2026-05-22
 
 set -euo pipefail
 
+# 1. Anchoring working directory (prevent cron PWD issues)
+cd "$(dirname "$0")"
+
 echo "=========================================="
 echo "Starting MosDNS binary update..."
 echo "=========================================="
 
-MOSDNS_BIN_DIR="/opt/mosdns/bin"
-BACKUP_DIR="${MOSDNS_BIN_DIR}/backup"
+MOSDNS_DIR="/opt/mosdns"
+MOSDNS_BIN_DIR="${MOSDNS_DIR}/bin"
+BACKUP_DIR="${MOSDNS_BIN_DIR}/backup-bin" # Isolated backup dir to prevent collision with geo backup
 TEMP_DIR=$(mktemp -d)
 
 # Cleanup on exit
@@ -19,18 +23,23 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# 1. Detect architecture
-architecture=$(dpkg --print-architecture)
+# 2. Robust architecture detection with fallback
+if command -v dpkg >/dev/null 2>&1; then
+    architecture=$(dpkg --print-architecture)
+else
+    architecture=$(uname -m)
+fi
+
 case "${architecture}" in
-    amd64)  arch_suffix="amd64" ;;
-    arm64)  arch_suffix="arm64" ;;
+    amd64|x86_64)  arch_suffix="amd64" ;;
+    arm64|aarch64) arch_suffix="arm64" ;;
     *)
         echo "Fatal: Unsupported architecture ${architecture}" >&2
         exit 1
         ;;
 esac
 
-# 2. Download latest release via wget with timeout & retries
+# 3. Download latest release via wget with timeout & retries
 DOWNLOAD_URL="https://github.com/IrineSistiana/mosdns/releases/latest/download/mosdns-linux-${arch_suffix}.zip"
 echo "Downloading binary from ${DOWNLOAD_URL}..."
 
@@ -39,7 +48,7 @@ if ! wget --timeout=20 --tries=3 --show-progress -qO "${TEMP_DIR}/mosdns.zip" "$
     exit 1
 fi
 
-# 3. Unzip and verify contents
+# 4. Unzip and verify contents
 echo "Extracting binary..."
 if ! unzip -qo "${TEMP_DIR}/mosdns.zip" -d "${TEMP_DIR}"; then
     echo "Fatal: Failed to unzip MosDNS binary package." >&2
@@ -54,7 +63,7 @@ fi
 
 chmod +x "${NEW_BIN}"
 
-# 4. Perform sanity check (test execution of the new binary)
+# 5. Perform sanity check (test execution of the new binary)
 echo "Performing sanity check on the new binary..."
 if ! "${NEW_BIN}" version > /dev/null 2>&1; then
     echo "Fatal: New binary failed sanity execution check." >&2
@@ -63,7 +72,7 @@ fi
 NEW_VER=$("${NEW_BIN}" version || echo "unknown")
 echo "Sanity check passed. New version detected: ${NEW_VER}"
 
-# 5. Prepare backup of current binary
+# 6. Prepare backup of current binary in isolated directory
 mkdir -p "${BACKUP_DIR}"
 ACTIVE_BIN="${MOSDNS_BIN_DIR}/mosdns"
 HAS_BACKUP=false
@@ -73,12 +82,12 @@ if [ -f "${ACTIVE_BIN}" ]; then
     HAS_BACKUP=true
 fi
 
-# 6. Atomic replacement (using mv to prevent 'Text file busy' error)
+# 7. Atomic replacement (using mv to prevent 'Text file busy' error)
 echo "Deploying new binary..."
 mv "${NEW_BIN}" "${ACTIVE_BIN}"
 chmod 755 "${ACTIVE_BIN}"
 
-# 7. Restart service and monitor status
+# 8. Restart service and monitor status
 echo "Restarting mosdns service..."
 if systemctl restart mosdns.service; then
     sleep 2
@@ -91,13 +100,12 @@ if systemctl restart mosdns.service; then
     fi
 fi
 
-# 8. Rollback in case of failure
+# 9. Rollback in case of failure
 echo "==========================================" >&2
 echo "WARNING: MosDNS service failed to start with new binary! Rolling back..." >&2
 echo "==========================================" >&2
 
 if [ "${HAS_BACKUP}" = true ]; then
-    # In case of mv, we restore from BACKUP_DIR
     cp "${BACKUP_DIR}/mosdns" "${ACTIVE_BIN}"
     chmod 755 "${ACTIVE_BIN}"
     systemctl restart mosdns.service
@@ -106,4 +114,5 @@ else
     echo "Fatal: Rollback failed. No previous binary backup found!" >&2
 fi
 
+rm -rf "${BACKUP_DIR}"
 exit 1
