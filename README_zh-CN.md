@@ -134,6 +134,10 @@ cd ~
 *   如果解析返回的 IP **属于国内 IP 段 (`cn_ip`)**，则立刻采信并返回响应；
 *   如果解析返回的 IP **不属于国内 IP 段（或被污染成海外 IP）**，则果断丢弃该响应，强制唤醒海外 DoT 加密通道重试，确保 100% 抵御常规 DNS 劫持与污染。
 
+#### 6. 🌐 智能 EDNS 客户端子网 (ECS) 调度优化 (ecs_handler)
+*   **国内透传与注入 (`ecs_domestic`)**：在向国内 DNS（`local_sequence`/`fallback_sequence`）发起请求前执行。开启 `forward: true` 和 `send: true`。若下游已携带 ECS（如前端 AdGuard Home）则直接透传；若无则自动注入客户端所在的公网子网（IPv4 `/24`，IPv6 `/48`），保证国内 CDN 节点获取精准的本省本网解析调度，消除解析延迟。
+*   **国外隐私去识别化 (`ecs_remote`)**：在流向海外加密通道（`remote_sequence`）前执行。强制设置 `forward: false` 和 `send: false`。在任何情况下彻底剥离内网私有网段及拓扑隐私，捍卫海外域名解析的私密性，并防止国外 CDN 服务商发生跨洋调度错配。
+
 ---
 
 ## 🛠️ 生产级高可用运维脚本系统
