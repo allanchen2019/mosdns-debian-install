@@ -1,12 +1,27 @@
-.DS_Store
-*.bak*
+# Logs and Databases
 bin/cache.dump
-bin/*.txt
-!bin/local-domain.txt
+
+# OS temporary files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak*
+*.tmp
+*~
+
+# MosDNS local bin & resources
 bin/mosdns
 bin/mosdns.zip
-bin/*.conf
-bin/*.conf2
 bin/LICENSE
 bin/README.md
 bin/config.yaml
+bin/*.txt
+!bin/local-domain.txt
+bin/*.conf
+bin/*.conf2
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
