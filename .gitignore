@@ -1,0 +1,12 @@
+.DS_Store
+*.bak*
+bin/cache.dump
+bin/*.txt
+!bin/local-domain.txt
+bin/mosdns
+bin/mosdns.zip
+bin/*.conf
+bin/*.conf2
+bin/LICENSE
+bin/README.md
+bin/config.yaml
