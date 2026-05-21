@@ -77,6 +77,21 @@ plugins:
     threshold: 500
     always_standby: false
 
+# 6. ECS 处理器 (用于国内 CDN 调度优化与国外隐私保护)
+- tag: "ecs_domestic"
+  type: "ecs_handler"
+  args:
+    forward: true
+    send: true
+    mask4: 24
+    mask6: 48
+
+- tag: "ecs_remote"
+  type: "ecs_handler"
+  args:
+    forward: false
+    send: false
+
 # ---------------- 逻辑序列 ----------------
 
 - tag: "local_router_sequence"
@@ -89,6 +104,7 @@ plugins:
 - tag: "local_sequence"
   type: sequence
   args:
+  - exec: $ecs_domestic
   - exec: $local_forward
   - exec: query_summary [local_hit]
   - exec: return
@@ -96,6 +112,7 @@ plugins:
 - tag: "remote_sequence"
   type: sequence
   args:
+  - exec: $ecs_remote
   - exec: $remote_fallback_strategy
   - exec: query_summary [remote_hit_resilient]
   - exec: return
@@ -103,6 +120,7 @@ plugins:
 - tag: "fallback_sequence"
   type: sequence
   args:
+  - exec: $ecs_domestic
   - exec: $local_forward
   - matches: "resp_ip $cn_ip"
     exec: query_summary [fallback_cn_hit]
@@ -110,6 +128,7 @@ plugins:
     exec: accept
   - exec: query_summary [fallback_remote_trial]
   - exec: drop_resp
+  - exec: $ecs_remote
   - exec: $remote_fallback_strategy
   - exec: query_summary [fallback_remote_final_resilient]
   - exec: return
