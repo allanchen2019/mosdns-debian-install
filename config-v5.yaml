@@ -1,9 +1,9 @@
 log:
   level: info
-  file: "/tmp/mosdns.log"
+  file: "/var/log/mosdns/mosdns.log"
 
 plugins:
-# 1. 缓存插件 (启用乐观缓存)
+# 1. 缓存插件 (启用乐观缓存，并持久化以防重启冷启动)
 - tag: "mem_cache"
   type: cache
   args:
@@ -28,6 +28,12 @@ plugins:
     files:
     - "./proxy-list.txt"
 
+- tag: "local_domain"
+  type: domain_set
+  args:
+    files:
+    - "./local-domain.txt"
+
 # 3. IP 集合
 - tag: "cn_ip"
   type: ip_set
@@ -37,6 +43,13 @@ plugins:
     - "./cn_ipv6.txt"
 
 # 4. 上游转发
+- tag: "router_forward"
+  type: forward
+  args:
+    concurrent: 1
+    upstreams:
+    - addr: "192.168.4.1"
+
 - tag: "local_forward"
   type: forward
   args:
@@ -65,6 +78,13 @@ plugins:
     always_standby: false
 
 # ---------------- 逻辑序列 ----------------
+
+- tag: "local_router_sequence"
+  type: sequence
+  args:
+  - exec: $router_forward
+  - exec: query_summary [router_hit]
+  - exec: return
 
 - tag: "local_sequence"
   type: sequence
@@ -102,6 +122,9 @@ plugins:
     exec: query_summary [cache_hit]
   - matches: has_resp
     exec: accept
+
+  - matches: "qname $local_domain"
+    exec: goto local_router_sequence
 
   - matches: "qname $direct_domain"
     exec: goto local_sequence
