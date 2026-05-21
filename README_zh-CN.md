@@ -13,19 +13,25 @@
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
 
-### 可选：每天7:00自动更新各种列表，`crontab -e` 后添加：
+### 自动守护更新 (Systemd Timer 机制):
+项目已原生集成了 **Systemd 定时任务守护**，无需手动配置繁琐且容易失效的系统 `crontab`。
+在安装完成后，系统会自动注册并启动 `mosdns-update.timer` 定时器，**默认在每周日凌晨 04:00 自动触发数据更新 (`update-geo.sh`) 与热重载自愈自检**。
 
+你只需使用以下指令即可管理和审计定时任务：
 ```bash
-0 7 * * * bash /opt/mosdns/update-geo.sh >> /var/log/cron.log 2>&1
-```
-### 保存退出。
+# 查看定时更新任务的下一次触发时间与当前运行状态
+systemctl status mosdns-update.timer
 
-### 更新资源文件:
+# 查看定时更新任务的历史运行日志与执行审计
+journalctl -u mosdns-update.service -n 50
+```
+
+### 手动更新资源文件:
 ```bash
 /opt/mosdns/update-geo.sh
 ```
 
-### 只更新可执行二进制:
+### 手动只更新可执行二进制:
 ```bash
 /opt/mosdns/update-bin.sh
 ```
@@ -103,7 +109,7 @@ cd ~
 ### 📋 核心解析规则与设计决策
 
 #### 1. ⚡️ 内存乐观缓存 (mem_cache)
-*   **配置**：开启 20,480 容量的 Lazy Cache，TTL 最大延长至 86,400 秒。
+*   **配置**：开启 20,480 容量 of Lazy Cache，TTL 最大延长至 86,400 秒。
 *   **持久化**：每 10 分钟自动将内存缓存 Dump 至本地 `/opt/mosdns/bin/cache.dump`。
 *   **收益**：服务重启或资源更新后瞬间读取 Dump 缓存文件，消解冷启动导致的内网 DNS 抖动，常用域名解析延迟在微秒级（`0 ms` 级体验）。
 
@@ -162,7 +168,7 @@ cd ~
     ```
 
 ### B. 生产级日志与归档审计
-*   服务日志输出路径已规范至稳固的物理文件：`/var/log/mosdns/mosdns.log`。
+*   服务日志输出路径已规范至稳固的物理文件：`/var/log/mosdns/mosdns.log`
 *   已部署 `/etc/logrotate.d/mosdns` 日志轮转，采用 `copytruncate` 模式每日切割，保留 30 天历史数据，彻底解决 LXC 空间撑爆的后顾之忧。
 *   实时日志回显审计：
     ```bash
