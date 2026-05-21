@@ -71,9 +71,12 @@ This project delivers a highly-optimized, low-latency, anti-pollution, and self-
 5. **🛡️ Dual-Validation Fallback Security (fallback_sequence)**:
    * First routes unclassified domains to local public DNS. If resolved IP is within domestic ranges (`cn_ip`), it is immediately accepted.
    * If the IP falls outside Chinese IP blocks (indicative of regular or polluted results), the response is dropped, and a mandatory secure DoT query is triggered to prevent DNS spoofing.
-6. **🚀 Self-Healing Maintenance Scripts**:
-   * **`update-geo.sh`**: Atomic data update checks to prevent syntax/empty dataset breakages, guarded by weekly Systemd-Timer triggers.
-   * **`update-bin.sh`**: Fully atomic binary updates using VFS `mv` renames to completely avoid the classic Linux `Text file busy` errors.
+6. **🚀 Production-Grade Self-Healing Maintenance Scripts**:
+   * **`AutoSetup.sh`**: Lightweight, idempotent, fast bootstrap script free from bloated dependencies (no Python/PIP overhead) and guards against pre-existing repository conflicts.
+   * **`install-mosdns.sh`**: High-availability installer that dynamically injects public resolvers temporarily to avoid offline DNS download deadlocks, and performs localhost port 53 validation queries before switching traffic.
+   * **`update-geo.sh`**: Atomic resource dataset updates featuring size-and-line validation limits (10,000+ lines / 200KB+ threshold) to completely block corrupted/empty upstream assets. Uses decoupled (`backup-geo`) path protection.
+   * **`update-bin.sh`**: Atomic executable binary updater with robust fallback CPU architecture detection (`uname -m` compatibility) and decoupled (`backup-bin`) backup protection to completely avoid concurrent rollback collisions.
+   * **`uninstall.sh`**: Safe uninstaller that performs in-memory system DNS recovery and systemd-resolved stub resolve symlink reconstruction *first* before purging files to eliminate self-destruction failures.
 
 ---
 

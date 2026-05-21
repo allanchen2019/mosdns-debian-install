@@ -1,42 +1,42 @@
 [English](./README.md) | 简体中文
 
-一个在Debian（或衍生版）上安装[mosdns](https://github.com/IrineSistiana/mosdns)的shell脚本。
+一个在Debian（或衍生版）上安装[mosdns](https://github.com/IrineSistiana/mosdns)的shell脚本与生产级高可用配置。
 
 2023-3-19更新：兼容V5，要安装之前的就砍掉重练吧。
-
 
 # 重要！先决条件：需要事先为DNS服务器做好IP分流。
 
 有关更多详细信息，请参阅[此仓库](https://github.com/allanchen2019/ospf-over-wireguard)。
 
 ### 独立安装 (amd64 & arm64):
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/AutoSetup.sh)
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
 
 ### 可选：每天7:00自动更新各种列表，`crontab -e` 后添加：
 
-```
-0 7 * * * bash /opt/mosdns/update-geo.sh  >> /var/log/cron.log 2>&1
+```bash
+0 7 * * * bash /opt/mosdns/update-geo.sh >> /var/log/cron.log 2>&1
 ```
 ### 保存退出。
 
 ### 更新资源文件:
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/update-geo.sh)
+```bash
+/opt/mosdns/update-geo.sh
 ```
 
 ### 只更新可执行二进制:
+```bash
+/opt/mosdns/update-bin.sh
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/update-bin.sh)
-```
+
 ### 卸载:
-```
-bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/v5/uninstall.sh)
+```bash
+/opt/mosdns/uninstall.sh
 ```
 
 ### 如不能正常安装，请先重置DNS:
-```
+```bash
 rm -rf /etc/resolv.conf
 cat << EOF >/etc/resolv.conf
 nameserver 1.1.1.1
@@ -46,6 +46,7 @@ systemctl enable systemd-resolved.service
 systemctl restart systemd-resolved.service
 cd ~
 ```
+
 ---
 
 ## 🚀 Homelab 核心 DNS 转发架构 (MosDNS v5)
@@ -129,10 +130,31 @@ cd ~
 
 ---
 
-## 🛠️ 运维与日志审计
+## 🛠️ 生产级高可用运维脚本系统
+
+本项目配套的部署与维护脚本经历全方位的工业级重构，确保 100% 的**幂等性、自愈防断网、并发隔离与零下线升级能力**：
+
+1. **`AutoSetup.sh` (极速免冗余引导)**
+   * 精简了原本强制安装 PIP 等与 MosDNS 无关的庞大 Python 依赖，极大节省空间并加快部署速度。
+   * 引入自适应 Git 更新机制，当 `/opt/mosdns` 存在时自动执行版本拉取对齐，完美支持二次幂等部署。
+2. **`install-mosdns.sh` (零离线热安装器)**
+   * **防止停用断网死锁**：在安装和卸载旧服务的生存周期中，临时接管系统 `/etc/resolv.conf` 配置为公共 DNS。100% 避免因旧服务停用导致 `wget` 无法解析 GitHub 域名的尴尬死锁。
+   * **金丝雀可用性校验**：新服务启动后，先对本地 `127.0.0.1:53` 进行权威域名解析自检，确认完全健康后，才正式将系统解析主服务器切回本地回环地址。
+3. **`update-geo.sh` (数据包物理校验更新)**
+   * 采用原子性临时下载方案，内置双阈值限制校验（行数必须大于 10,000 行，文件体积必须大于 200KB）。彻底防御因网络超时或运营商劫持下载到空包、乱码直接导致 MosDNS 解析挂死。
+   * **并发隔离保护**：独立使用 `backup-geo` 备份空间，避免并发更新时临时备份文件被互相覆盖。
+4. **`update-bin.sh` (二进制零死锁热升级)**
+   * 升级架构判定引擎（兼容 `uname -m` 兜底），完美适配 Alpine/极简 LXC 等未装 `dpkg` 的精简系统。
+   * 使用 `mv` 虚拟文件系统原子替换，彻底绕过 Linux 经典的 `Text file busy` 进程占用报错。
+   * 独立使用 `backup-bin` 备份空间，升级失败 2 秒内启动自动回滚自愈机制，绝不离线。
+5. **`uninstall.sh` (无下线优雅卸载回滚)**
+   * **防自杀崩溃机制**：先在内存中抢先一步完成 DNS 状态重写与 `systemd-resolved` 软链接重建，最后再删除自身物理文件夹，避免由于脚本自身先于恢复指令删除而导致回滚被迫瘫痪的致命漏洞。
+
+---
+
+## ⚙️ 运维与日志审计
 
 ### A. 定时资源更新自愈机制
-脚本位于 `/opt/mosdns/update-geo.sh`，采用原子性临时下载与大小校验防空容灾设计，更新失败会自动还原备份，绝不引发 DNS 服务宕机。
 *   系统已集成 systemd 定时器守护：`mosdns-update.timer`，每周日凌晨 04:00 自动触发，无需依赖传统 crontab。
 *   查看下一次自动更新触发点：
     ```bash
@@ -146,3 +168,8 @@ cd ~
     ```bash
     tail -f /var/log/mosdns/mosdns.log | grep -E '\[router_hit\]|\[remote_hit_resilient\]'
     ```
+
+---
+
+## 📄 License
+This project is open-source. For more info, please see the source scripts.
