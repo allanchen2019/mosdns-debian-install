@@ -1,52 +1,123 @@
 log:
-  level: debug
-  production: true
+  level: info
+  file: "/tmp/mosdns.log"
 
 plugins:
-  - tag: "direct_domain"
-    type: domain_set
-    args:
-      files:
-        - "./accelerated-domains.china.conf.raw.txt"
-        - "./apple.china.conf.raw.txt"
+# 1. 缓存插件 (启用乐观缓存)
+- tag: "mem_cache"
+  type: cache
+  args:
+    size: 20480
+    lazy_cache_ttl: 86400
+    dump_file: "./cache.dump"
+    dump_interval: 600
 
-  - tag: "remote_forward"
-    type: forward
-    args:
-      concurrent: 2
-      upstreams:
-        - addr: "1.1.1.1"
-        - addr: "8.8.8.8"
+# 2. 域名集合
+- tag: "direct_domain"
+  type: domain_set
+  args:
+    files:
+    - "./china-list.txt"
+    - "./apple-cn.txt"
+    - "./direct-domain.txt"
+    - "./geosite_category-games@cn.txt"
 
-  - tag: "local_forward"
-    type: forward
-    args:
-      concurrent: 2
-      upstreams:
-        - addr: "223.5.5.5"
-        - addr: "119.29.29.29"
+- tag: "remote_domain"
+  type: domain_set
+  args:
+    files:
+    - "./proxy-list.txt"
 
-  - tag: "local_sequence"
-    type: sequence
-    args:
-      - exec: query_summary local_forward
-      - exec: $local_forward
+# 3. IP 集合
+- tag: "cn_ip"
+  type: ip_set
+  args:
+    files:
+    - "./cn_ipv4.txt"
+    - "./cn_ipv6.txt"
 
-  - tag: "remote_sequence"
-    type: sequence
-    args:
-      - exec: query_summary remote_forward
-      - exec: $remote_forward
+# 4. 上游转发
+- tag: "local_forward"
+  type: forward
+  args:
+    concurrent: 2
+    upstreams:
+    - addr: "119.29.29.29"
+    - addr: "223.5.5.5"
 
-  - tag: "main_sequence"
-    type: sequence
-    args:
-      - exec: prefer_ipv4
-      - matches: "qname $direct_domain"
-        exec: goto local_sequence
-      - exec: goto remote_sequence
+- tag: "remote_forward"
+  type: forward
+  args:
+    concurrent: 2
+    upstreams:
+    - addr: "tls://8.8.8.8:853"
+      enable_pipeline: true
+    - addr: "tls://1.1.1.1:853"
+      enable_pipeline: true
 
-  - type: udp_server
-    args:
-      entry: main_sequence
-      listen: :53
+# 5. 自愈兜底策略 (隐私优先：始终先尝试隧道，500ms 超时后回退国内 DNS)
+- tag: "remote_fallback_strategy"
+  type: fallback
+  args:
+    primary: remote_forward
+    secondary: local_forward
+    threshold: 500
+    always_standby: false
+
+# ---------------- 逻辑序列 ----------------
+
+- tag: "local_sequence"
+  type: sequence
+  args:
+  - exec: $local_forward
+  - exec: query_summary [local_hit]
+  - exec: return
+
+- tag: "remote_sequence"
+  type: sequence
+  args:
+  - exec: $remote_fallback_strategy
+  - exec: query_summary [remote_hit_resilient]
+  - exec: return
+
+- tag: "fallback_sequence"
+  type: sequence
+  args:
+  - exec: $local_forward
+  - matches: "resp_ip $cn_ip"
+    exec: query_summary [fallback_cn_hit]
+  - matches: "resp_ip $cn_ip"
+    exec: accept
+  - exec: query_summary [fallback_remote_trial]
+  - exec: drop_resp
+  - exec: $remote_fallback_strategy
+  - exec: query_summary [fallback_remote_final_resilient]
+  - exec: return
+
+- tag: "main_sequence"
+  type: sequence
+  args:
+  - exec: $mem_cache
+  - matches: has_resp
+    exec: query_summary [cache_hit]
+  - matches: has_resp
+    exec: accept
+
+  - matches: "qname $direct_domain"
+    exec: goto local_sequence
+
+  - matches: "qname $remote_domain"
+    exec: goto remote_sequence
+
+  - exec: goto fallback_sequence
+
+# ---------------- 服务器监听 ----------------
+- type: udp_server
+  args:
+    entry: main_sequence
+    listen: :53
+
+- type: tcp_server
+  args:
+    entry: main_sequence
+    listen: :53
