@@ -18,7 +18,9 @@ const state = {
     // Rules Selection
     selectedRuleFile: '',
     onlineRules: [],
-    
+    rulesActiveSubtab: 'local', // 'local' or 'remote'
+    rulesData: { local_rules: [], remote_rules: [] },
+
     // Console State
     consoleMode: 'maint' // 'maint' or 'sys'
 };
@@ -550,72 +552,96 @@ function setupConfigEditor() {
    6. DOMAIN LISTS MANAGER (XSS Safe selector)
    ======================================================= */
 function loadRulesList() {
-    const listGroup = document.getElementById('rules-file-selector');
-    listGroup.replaceChildren(); // Safe clear
-
     fetch('/api/rules')
         .then(res => res.json())
         .then(data => {
-            state.onlineRules = data.online_rules || [];
-            const customRules = data.custom_rules || [];
-
-            if (state.onlineRules.length === 0 && customRules.length === 0) {
-                const p = document.createElement('p');
-                p.className = 'card-helper text-center';
-                p.textContent = '没有读取到可用的域名列表文件';
-                listGroup.appendChild(p);
-                return;
-            }
-
-            // Render Online Rules Group
-            if (state.onlineRules.length > 0) {
-                const title = document.createElement('div');
-                title.className = 'rules-group-title';
-                title.textContent = '自动更新列表 (只读)';
-                listGroup.appendChild(title);
-
-                state.onlineRules.forEach(file => {
-                    const btn = document.createElement('button');
-                    btn.className = 'rule-file-btn';
-                    btn.textContent = '🔒 ' + file;
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        loadRuleFileContent(file);
-                    });
-                    listGroup.appendChild(btn);
-                });
-            }
-
-            // Render Custom Rules Group
-            if (customRules.length > 0) {
-                const title = document.createElement('div');
-                title.className = 'rules-group-title';
-                title.textContent = '自定义规则列表 (可编辑)';
-                listGroup.appendChild(title);
-
-                customRules.forEach(file => {
-                    const btn = document.createElement('button');
-                    btn.className = 'rule-file-btn';
-                    btn.textContent = '✏️ ' + file;
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        loadRuleFileContent(file);
-                    });
-                    listGroup.appendChild(btn);
-                });
-            }
+            state.rulesData = data;
+            renderRulesList();
         })
         .catch(err => {
             console.error('Error loading rules files:', err);
         });
 }
 
+function renderRulesList() {
+    const listGroup = document.getElementById('rules-file-selector');
+    listGroup.replaceChildren(); // Safe clear
+
+    const activeTab = state.rulesActiveSubtab;
+    const rules = activeTab === 'local' ? (state.rulesData.local_rules || []) : (state.rulesData.remote_rules || []);
+
+    if (rules.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'card-helper text-center';
+        p.textContent = '该分类下没有读取到可用的域名列表文件';
+        listGroup.appendChild(p);
+        return;
+    }
+
+    // Update global state.onlineRules based on loaded rules
+    state.onlineRules = [];
+    if (state.rulesData.local_rules) {
+        state.rulesData.local_rules.forEach(r => { if (r.is_online) state.onlineRules.push(r.filename); });
+    }
+    if (state.rulesData.remote_rules) {
+        state.rulesData.remote_rules.forEach(r => { if (r.is_online) state.onlineRules.push(r.filename); });
+    }
+
+    const onlineRules = rules.filter(r => r.is_online);
+    const customRules = rules.filter(r => !r.is_online);
+
+    // Render Online Rules Group
+    if (onlineRules.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'rules-group-title';
+        title.textContent = '自动更新列表 (只读)';
+        listGroup.appendChild(title);
+
+        onlineRules.forEach(rule => {
+            const btn = document.createElement('button');
+            btn.className = 'rule-file-btn';
+            if (state.selectedRuleFile === rule.filename) {
+                btn.classList.add('active');
+            }
+            btn.textContent = '🔒 ' + rule.filename;
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadRuleFileContent(rule.filename);
+            });
+            listGroup.appendChild(btn);
+        });
+    }
+
+    // Render Custom Rules Group
+    if (customRules.length > 0) {
+        const title = document.createElement('div');
+        title.className = 'rules-group-title';
+        title.textContent = '自定义规则列表 (可编辑)';
+        listGroup.appendChild(title);
+
+        customRules.forEach(rule => {
+            const btn = document.createElement('button');
+            btn.className = 'rule-file-btn';
+            if (state.selectedRuleFile === rule.filename) {
+                btn.classList.add('active');
+            }
+            btn.textContent = '✏️ ' + rule.filename;
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadRuleFileContent(rule.filename);
+            });
+            listGroup.appendChild(btn);
+        });
+    }
+}
+
 function loadRuleFileContent(file) {
     const textarea = document.getElementById('rules-textarea');
     const saveBtn = document.getElementById('rules-btn-save');
     const label = document.getElementById('rules-current-file-label');
+    const helperCard = document.getElementById('rules-helper-card');
     
     const isReadOnly = (state.onlineRules || []).includes(file);
 
@@ -636,10 +662,12 @@ function loadRuleFileContent(file) {
                 saveBtn.disabled = true;
                 saveBtn.textContent = '🔒 只读保护';
                 label.textContent = `/opt/mosdns/bin/${file} (自动下载，只读)`;
+                if (helperCard) helperCard.style.display = 'none';
             } else {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '💾 保存域名规则';
                 label.textContent = `/opt/mosdns/bin/${file}`;
+                if (helperCard) helperCard.style.display = 'block';
             }
         })
         .catch(err => {
@@ -651,41 +679,127 @@ function setupRulesManager() {
     const saveBtn = document.getElementById('rules-btn-save');
     const textarea = document.getElementById('rules-textarea');
 
-    saveBtn.addEventListener('click', () => {
-        if (!state.selectedRuleFile) return;
-        
-        const isReadOnly = (state.onlineRules || []).includes(state.selectedRuleFile);
-        if (isReadOnly) {
-            alert('该列表为自动定时更新的只读列表，不支持手动修改。');
-            return;
-        }
+    // 1. Sub-tab click listeners
+    const localTabBtn = document.getElementById('rules-subtab-local');
+    const remoteTabBtn = document.getElementById('rules-subtab-remote');
 
-        if (!confirm(`【防断网自愈保障】\n修改列表域名后，后端在重新加载 DNS 服务前会自动创建备份；如果重启后本地解析遭遇不可抗拒的故障，系统会自动回滚并还原该文件。\n\n您确认提交修改 '${state.selectedRuleFile}' 吗？`)) return;
-
-        saveBtn.disabled = true;
-        saveBtn.textContent = '💾 提交并测试...';
-
-        fetch(`/api/rules/content?file=${encodeURIComponent(state.selectedRuleFile)}`, {
-            method: 'POST',
-            body: textarea.value
-        })
-        .then(async res => {
-            if (res.ok) {
-                alert(`🎉 域名列表 '${state.selectedRuleFile}' 应用成功，主主解析自测试通过，服务已平滑重载！`);
-            } else {
-                const text = await res.text();
-                alert(`❌ 域名列表加载失败！已自动触发安全回滚。\n详情: ${text}`);
-            }
-        })
-        .catch(err => {
-            alert('网络传输故障，列表保存失败！' + err.message);
-        })
-        .finally(() => {
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 保存域名规则';
-            syncStatus();
+    if (localTabBtn && remoteTabBtn) {
+        localTabBtn.addEventListener('click', () => {
+            localTabBtn.classList.add('active');
+            remoteTabBtn.classList.remove('active');
+            state.rulesActiveSubtab = 'local';
+            renderRulesList();
         });
-    });
+
+        remoteTabBtn.addEventListener('click', () => {
+            remoteTabBtn.classList.add('active');
+            localTabBtn.classList.remove('active');
+            state.rulesActiveSubtab = 'remote';
+            renderRulesList();
+        });
+    }
+
+    // 2. New rules list button
+    const createBtn = document.getElementById('rules-btn-create');
+    if (createBtn) {
+        createBtn.addEventListener('click', () => {
+            const activeCategory = state.rulesActiveSubtab;
+            const categoryLabel = activeCategory === 'local' ? '直连本地' : '代理远程';
+            const filename = prompt(`【新建自定义域名列表】\n当前分类: ${categoryLabel}\n\n请输入新建的列表文件名（例如: my-list.txt）\n必须以 .txt 结尾，且仅包含字母、数字、下划线和连字符：`);
+            if (filename === null) return;
+
+            const cleanName = filename.trim();
+            if (!cleanName) {
+                alert('文件名不能为空！');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_-]+\.txt$/.test(cleanName)) {
+                alert('文件名不合法！必须以 .txt 结尾，且只能包含英文、数字、下划线(_)和连字符(-)。\n例如: my-custom-domains.txt');
+                return;
+            }
+
+            createBtn.disabled = true;
+            createBtn.textContent = '⏳ 创建中...';
+
+            fetch('/api/rules/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: cleanName,
+                    category: activeCategory
+                })
+            })
+            .then(async res => {
+                if (res.ok) {
+                    const result = await res.json();
+                    alert(result.message || '自定义域名列表创建成功，已生效！');
+                    
+                    // Refresh rules
+                    fetch('/api/rules')
+                        .then(r => r.json())
+                        .then(data => {
+                            state.rulesData = data;
+                            renderRulesList();
+                            // Automatically load and select the newly created rule
+                            loadRuleFileContent(cleanName);
+                        });
+                } else {
+                    const errMsg = await res.text();
+                    alert(`❌ 创建失败: ${errMsg}`);
+                }
+            })
+            .catch(err => {
+                alert('创建文件请求失败，网络异常: ' + err.message);
+            })
+            .finally(() => {
+                createBtn.disabled = false;
+                createBtn.textContent = '➕ 新建列表';
+                syncStatus();
+            });
+        });
+    }
+
+    // 3. Save button listener
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (!state.selectedRuleFile) return;
+            
+            const isReadOnly = (state.onlineRules || []).includes(state.selectedRuleFile);
+            if (isReadOnly) {
+                alert('该列表为自动定时更新的只读列表，不支持手动修改。');
+                return;
+            }
+
+            if (!confirm(`【防断网自愈保障】\n修改列表域名后，后端在重新加载 DNS 服务前会自动创建备份；如果重启后本地解析遭遇不可抗拒的故障，系统会自动回滚并还原该文件。\n\n您确认提交修改 '${state.selectedRuleFile}' 吗？`)) return;
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 提交并测试...';
+
+            fetch(`/api/rules/content?file=${encodeURIComponent(state.selectedRuleFile)}`, {
+                method: 'POST',
+                body: textarea.value
+            })
+            .then(async res => {
+                if (res.ok) {
+                    alert(`🎉 域名列表 '${state.selectedRuleFile}' 应用成功，主主解析自测试通过，服务已平滑重载！`);
+                } else {
+                    const text = await res.text();
+                    alert(`❌ 域名列表加载失败！已自动触发安全回滚。\n详情: ${text}`);
+                }
+            })
+            .catch(err => {
+                alert('网络传输故障，列表保存失败！' + err.message);
+            })
+            .finally(() => {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 保存域名规则';
+                syncStatus();
+            });
+        });
+    }
 }
 
 /* ========================================================

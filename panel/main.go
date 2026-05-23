@@ -81,6 +81,7 @@ func registerAPIs() {
 	http.HandleFunc("/api/config", handleConfig)
 	http.HandleFunc("/api/rules", handleRulesList)
 	http.HandleFunc("/api/rules/content", handleRuleFileContent)
+	http.HandleFunc("/api/rules/create", handleRulesCreate)
 	http.HandleFunc("/api/queries/history", handleQueryHistory)
 	http.HandleFunc("/api/stats/summary", handleStatsSummary)
 
@@ -296,15 +297,54 @@ func handleRulesList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
-	onlineRules := []string{"china-list.txt", "proxy-list.txt", "apple-cn.txt"}
-	customRules := []string{"local-domain.txt", "direct-domain.txt", "geosite_category-games@cn.txt"}
-	
-	response := map[string]interface{}{
-		"online_rules": onlineRules,
-		"custom_rules": customRules,
+
+	localFiles, remoteFiles, err := ReadDomainSets()
+	if err != nil {
+		http.Error(w, "Failed to read configuration: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	
+
+	onlineRulesMap := map[string]bool{
+		"china-list.txt": true,
+		"proxy-list.txt": true,
+		"apple-cn.txt":   true,
+	}
+
+	type RuleFileInfo struct {
+		Filename string `json:"filename"`
+		IsOnline bool   `json:"is_online"`
+	}
+
+	// Remove duplicates and maintain order
+	seenLocal := make(map[string]bool)
+	var localRules []RuleFileInfo
+	for _, f := range localFiles {
+		if !seenLocal[f] {
+			seenLocal[f] = true
+			localRules = append(localRules, RuleFileInfo{
+				Filename: f,
+				IsOnline: onlineRulesMap[f],
+			})
+		}
+	}
+
+	seenRemote := make(map[string]bool)
+	var remoteRules []RuleFileInfo
+	for _, f := range remoteFiles {
+		if !seenRemote[f] {
+			seenRemote[f] = true
+			remoteRules = append(remoteRules, RuleFileInfo{
+				Filename: f,
+				IsOnline: onlineRulesMap[f],
+			})
+		}
+	}
+
+	response := map[string]interface{}{
+		"local_rules":  localRules,
+		"remote_rules": remoteRules,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
@@ -578,6 +618,9 @@ func getRAMStats() (total uint64, free uint64) {
 			}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.Printf("Warning: meminfo scanner error: %v", err)
+	}
 	return total, free
 }
 
@@ -655,4 +698,91 @@ func (s *sseWriter) Write(p []byte) (n int, err error) {
 	}
 	s.flusher.Flush()
 	return len(p), nil
+}
+
+// handleRulesCreate handles the creation of a new custom rule list and adds it to config-v5.yaml
+func handleRulesCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Filename string `json:"filename"`
+		Category string `json:"category"` // "local" or "remote"
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad Request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	filename := strings.TrimSpace(req.Filename)
+	category := strings.TrimSpace(req.Category)
+
+	fullPath, err := ValidateFilename(filename)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Verify if the file already exists
+	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+		http.Error(w, fmt.Sprintf("域名列表文件 '%s' 已存在，无法重复创建。", filename), http.StatusConflict)
+		return
+	}
+
+	// Determine configuration target tag in config-v5.yaml
+	var configTag string
+	if category == "local" {
+		configTag = "direct_domain"
+	} else if category == "remote" {
+		configTag = "remote_domain"
+	} else {
+		http.Error(w, "invalid category, must be 'local' or 'remote'", http.StatusBadRequest)
+		return
+	}
+
+	// Default template content containing guidance and examples
+	templateContent := `# MosDNS 自定义域名列表
+# 
+# 编写格式指导：
+# 1. 每行输入一个域名匹配规则。
+# 2. 支持以下几种前缀格式：
+#    - domain:example.com      (精确匹配 example.com 及其所有子域名)
+#    - full:www.example.com    (完整精确匹配 www.example.com)
+#    - keyword:google          (匹配含有关键字 google 的域名)
+#    - regexp:^[^.]+$          (使用正则表达式匹配，例如匹配所有单标签/本地主机名)
+# 
+# 示例：
+# domain:apple.com
+# full:api.github.com
+# keyword:netflix
+`
+
+	// Create and write default template
+	if err := os.WriteFile(fullPath, []byte(templateContent), 0644); err != nil {
+		http.Error(w, "Failed to create rule list file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Add file entry to config-v5.yaml
+	if err := AddFileToDomainSet(configTag, filename); err != nil {
+		// Clean up created file if config edit fails
+		os.Remove(fullPath)
+		http.Error(w, "Failed to update configuration: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Trigger mosdns service restart to load the new config & list
+	_, restartErr := ManageService("restart")
+	if restartErr != nil {
+		http.Error(w, "New file created but failed to restart MosDNS service: "+restartErr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message":  fmt.Sprintf("成功创建列表并激活，已自动挂载至 config-v5.yaml 的 %s 区域中！", configTag),
+		"filename": filename,
+	})
 }

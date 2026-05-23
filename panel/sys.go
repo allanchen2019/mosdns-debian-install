@@ -28,17 +28,6 @@ var (
 	QueryClientsMu sync.Mutex
 )
 
-// Hardcoded safe white-listed file basenames to prevent arbitrary path traversal
-var allowedFiles = map[string]string{
-	"config-v5.yaml":                "/opt/mosdns/config-v5.yaml",
-	"china-list.txt":                "/opt/mosdns/bin/china-list.txt",
-	"proxy-list.txt":                "/opt/mosdns/bin/proxy-list.txt",
-	"apple-cn.txt":                  "/opt/mosdns/bin/apple-cn.txt",
-	"local-domain.txt":              "/opt/mosdns/bin/local-domain.txt",
-	"direct-domain.txt":             "/opt/mosdns/bin/direct-domain.txt",
-	"geosite_category-games@cn.txt": "/opt/mosdns/bin/geosite_category-games@cn.txt",
-}
-
 // Regex for parsing MosDNS query summary logs:
 // e.g. "2026-05-23T09:37:54+08:00 [info] query_summary [cache_hit] qname: www.baidu.com. qtype: 1 ..."
 // or "info summary: qname: www.baidu.com. qtype: 1 ... [cache_hit]"
@@ -46,14 +35,19 @@ var qnameRegex = regexp.MustCompile(`qname:\s*([^\s]+)`)
 var qtypeRegex = regexp.MustCompile(`qtype:\s*([^\s]+)`)
 var tagRegex = regexp.MustCompile(`\[([a-zA-Z0-9_]+_hit|[a-zA-Z0-9_]+_trial|[a-zA-Z0-9_]+_resilient|[a-zA-Z0-9_]+_final_resilient)\]`)
 
-// ValidateFilename checks if a filename is strictly white-listed to prevent path traversal
+// ValidateFilename checks if a filename is safe to read/write to prevent path traversal
 func ValidateFilename(filename string) (string, error) {
 	cleanName := filepath.Base(filename)
-	fullPath, exists := allowedFiles[cleanName]
-	if !exists {
-		return "", fmt.Errorf("access denied: file '%s' is not in the allowed list", filename)
+	// Check if it's config-v5.yaml
+	if cleanName == "config-v5.yaml" {
+		return "/opt/mosdns/config-v5.yaml", nil
 	}
-	return fullPath, nil
+	// Otherwise it must match the safe pattern and end with .txt
+	matched, err := regexp.MatchString(`^[a-zA-Z0-9_-]+\.txt$`, cleanName)
+	if err != nil || !matched {
+		return "", fmt.Errorf("access denied: invalid filename '%s'", filename)
+	}
+	return filepath.Join("/opt/mosdns/bin", cleanName), nil
 }
 
 // ManageService executes standard systemctl commands safely using strict args
@@ -155,22 +149,20 @@ func tailLogFile(logPath string) error {
 
 		if err == io.EOF {
 			// Check for log rotation (copytruncate or rename rotation)
-			select {
-			case <-ticker.C:
-				currentStat, err := os.Stat(logPath)
-				if err != nil {
-					// File might be briefly deleted during rotation
-					return err
-				}
-
-				// If file size shrank or inode changed, log rotation has occurred
-				currentInode := getInode(currentStat)
-				if currentStat.Size() < fileSize || currentInode != inode {
-					log.Println("Log rotation detected, reloading tailer...")
-					return nil
-				}
-				fileSize = currentStat.Size()
+			<-ticker.C
+			currentStat, err := os.Stat(logPath)
+			if err != nil {
+				// File might be briefly deleted during rotation
+				return err
 			}
+
+			// If file size shrank or inode changed, log rotation has occurred
+			currentInode := getInode(currentStat)
+			if currentStat.Size() < fileSize || currentInode != inode {
+				log.Println("Log rotation detected, reloading tailer...")
+				return nil
+			}
+			fileSize = currentStat.Size()
 			continue
 		}
 
@@ -272,10 +264,7 @@ func parseAndSaveQuery(line string) {
 		upstream = "Default Gateway"
 	}
 
-	clientIP := logData.Client
-	if strings.HasPrefix(clientIP, "::ffff:") {
-		clientIP = strings.TrimPrefix(clientIP, "::ffff:")
-	}
+	clientIP := strings.TrimPrefix(logData.Client, "::ffff:")
 
 	// Save to SQLite
 	err := InsertLog(clientIP, domain, qtype, tag, durationMs, upstream)
@@ -391,9 +380,115 @@ func ScrapeMosdnsMetrics() MosdnsMetrics {
 			m.CacheHits = int(val)
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.Printf("Warning: metrics scanner error: %v", err)
+	}
 
 	if m.CacheQueries > 0 {
 		m.CacheHitRate = (float64(m.CacheHits) / float64(m.CacheQueries)) * 100.0
 	}
 	return m
+}
+
+// ReadDomainSets parses config-v5.yaml to find files under direct_domain, local_domain, and remote_domain
+func ReadDomainSets() (localFiles []string, remoteFiles []string, err error) {
+	data, err := os.ReadFile("/opt/mosdns/config-v5.yaml")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	var currentTag string
+	var inFiles bool
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		// Detect tag
+		if strings.HasPrefix(trimmed, "- tag:") {
+			currentTag = strings.Trim(strings.TrimPrefix(trimmed, "- tag:"), `" `)
+			inFiles = false
+			continue
+		}
+		if trimmed == "files:" {
+			inFiles = true
+			continue
+		}
+		// If we are inside another plugin definition, reset tag
+		if strings.HasPrefix(trimmed, "-") && !strings.HasPrefix(trimmed, "- tag:") && !inFiles {
+			currentTag = ""
+			inFiles = false
+		}
+		if inFiles && strings.HasPrefix(trimmed, "-") {
+			// Extract file path
+			fileVal := strings.Trim(strings.TrimPrefix(trimmed, "-"), `" '`)
+			fileVal = filepath.Base(fileVal) // Get just the filename (e.g. china-list.txt)
+			if currentTag == "direct_domain" || currentTag == "local_domain" {
+				localFiles = append(localFiles, fileVal)
+			} else if currentTag == "remote_domain" {
+				remoteFiles = append(remoteFiles, fileVal)
+			}
+		}
+	}
+	return localFiles, remoteFiles, nil
+}
+
+// AddFileToDomainSet inserts a new file entry under the specified tag's files list in config-v5.yaml
+func AddFileToDomainSet(tag string, filename string) error {
+	configPath := "/opt/mosdns/config-v5.yaml"
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	var newLines []string
+	var currentTag string
+	var inTargetFiles bool
+	var inserted bool
+
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+
+		// Check if we are starting a new plugin tag block
+		if strings.HasPrefix(trimmed, "- tag:") {
+			// If we were inside the target's files section, and we are now seeing a new tag block,
+			// it means we finished the files section of the target tag.
+			if inTargetFiles && !inserted {
+				newLines = append(newLines, fmt.Sprintf("    - \"./%s\"", filename))
+				inserted = true
+				inTargetFiles = false
+			}
+			currentTag = strings.Trim(strings.TrimPrefix(trimmed, "- tag:"), `" `)
+		}
+
+		// Check if we are exiting the files block by some other means (e.g., decreased indentation or non-list item)
+		if inTargetFiles && !inserted && trimmed != "" && !strings.HasPrefix(trimmed, "-") && !strings.HasPrefix(trimmed, "files:") {
+			newLines = append(newLines, fmt.Sprintf("    - \"./%s\"", filename))
+			inserted = true
+			inTargetFiles = false
+		}
+
+		newLines = append(newLines, line)
+
+		if currentTag == tag && trimmed == "files:" {
+			inTargetFiles = true
+		}
+	}
+
+	// In case it's at the end of the file
+	if inTargetFiles && !inserted {
+		newLines = append(newLines, fmt.Sprintf("    - \"./%s\"", filename))
+		inserted = true
+	}
+
+	if !inserted {
+		return fmt.Errorf("tag '%s' not found or has no 'files:' section in config-v5.yaml", tag)
+	}
+
+	// Write back
+	return os.WriteFile(configPath, []byte(strings.Join(newLines, "\n")), 0644)
 }

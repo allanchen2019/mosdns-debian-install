@@ -203,7 +203,14 @@
             <section class="tab-panel" id="tab-rules">
                 <div class="rules-container">
                     <div class="rules-sidebar glass-card">
-                        <h3>📂 列表选择</h3>
+                        <div class="rules-sidebar-header">
+                            <h3>📂 域名列表</h3>
+                            <button class="rules-create-btn" id="rules-btn-create" title="新建自定义域名列表">➕ 新建列表</button>
+                        </div>
+                        <div class="rules-subtabs">
+                            <button class="rules-subtab-btn active" id="rules-subtab-local" data-rules-tab="local">🏠 直连本地</button>
+                            <button class="rules-subtab-btn" id="rules-subtab-remote" data-rules-tab="remote">✈️ 代理远程</button>
+                        </div>
                         <div class="rules-list-group" id="rules-file-selector">
                             <!-- Dynamic list buttons -->
                         </div>
@@ -218,6 +225,15 @@
                         </div>
                         <div class="editor-body">
                             <textarea class="code-editor" id="rules-textarea" spellcheck="false" placeholder="请在左侧选择需要编辑的白名单/防污染域名列表文件。" disabled></textarea>
+                        </div>
+                        <div class="rules-helper-card" id="rules-helper-card" style="display: none;">
+                            <h4>💡 规则编写格式指导与示例</h4>
+                            <ul>
+                                <li><code>domain:example.com</code> - 匹配 <code>example.com</code> 及其所有子域名（推荐）</li>
+                                <li><code>full:www.example.com</code> - 完整精确匹配该域名</li>
+                                <li><code>keyword:google</code> - 匹配域名中含有该关键字的请求</li>
+                                <li><code>regexp:^[^.]+$</code> - 使用正则表达式匹配，例如匹配所有单个标签（本地主机名）</li>
+                            </ul>
                         </div>
                     </div>
                 </div>

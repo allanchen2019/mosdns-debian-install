@@ -353,6 +353,7 @@ body {
     letter-spacing: -0.5px;
     background: linear-gradient(90deg, #fff, var(--text-dim));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -669,6 +670,101 @@ tr:hover td {
     border-color: rgba(139, 92, 246, 0.25);
     color: #fff;
     font-weight: 500;
+}
+
+/* Rules sidebar sub-tabs & actions */
+.rules-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rules-create-btn {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #a78bfa;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.rules-create-btn:hover {
+    background: rgba(139, 92, 246, 0.3);
+    color: #fff;
+}
+
+.rules-subtabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    padding: 3px;
+}
+
+.rules-subtab-btn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 6px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rules-subtab-btn:hover {
+    color: var(--text-main);
+}
+
+.rules-subtab-btn.active {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Custom rules formatting helper card */
+.rules-helper-card {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 15px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    animation: fadeIn 0.3s ease;
+}
+
+.rules-helper-card h4 {
+    color: var(--text-main);
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rules-helper-card ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.rules-helper-card li {
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.rules-helper-card code {
+    font-family: var(--font-mono);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #60a5fa;
 }
 
 .rules-main {
