@@ -76,6 +76,8 @@ if systemctl is-active --quiet mosdns.service || systemctl is-enabled --quiet mo
     systemctl stop mosdns.service || true
     systemctl disable mosdns.service || true
 fi
+# Forcefully kill any orphaned mosdns processes to prevent port bind conflicts
+pkill -9 mosdns || true
 
 # Remove old service file if exists
 if [ -f "/etc/systemd/system/mosdns.service" ]; then

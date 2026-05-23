@@ -89,6 +89,8 @@ chmod 755 "${ACTIVE_BIN}"
 
 # 8. Restart service and monitor status
 echo "Restarting mosdns service..."
+# Forcefully kill any orphaned processes to ensure clean port binding on hot-swap restart
+pkill -9 mosdns || true
 if systemctl restart mosdns.service; then
     sleep 2
     if systemctl is-active --quiet mosdns.service; then

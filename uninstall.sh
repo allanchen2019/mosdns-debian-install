@@ -21,12 +21,16 @@ if systemctl is-active --quiet mosdns.service || systemctl is-enabled --quiet mo
     systemctl stop mosdns.service || true
     systemctl disable mosdns.service || true
 fi
+# Forcefully kill any orphaned mosdns processes
+pkill -9 mosdns || true
 
 echo "Stopping and disabling MosDNS Control Panel service..."
 if systemctl is-active --quiet mosdns-panel.service || systemctl is-enabled --quiet mosdns-panel.service 2>/dev/null; then
     systemctl stop mosdns-panel.service || true
     systemctl disable mosdns-panel.service || true
 fi
+# Forcefully kill any orphaned panel processes
+pkill -9 mosdns-panel || true
 
 # Remove systemd service configurations
 if [ -f "/etc/systemd/system/mosdns.service" ]; then
