@@ -17,6 +17,7 @@ const state = {
     
     // Rules Selection
     selectedRuleFile: '',
+    onlineRules: [],
     
     // Console State
     consoleMode: 'maint' // 'maint' or 'sys'
@@ -554,8 +555,11 @@ function loadRulesList() {
 
     fetch('/api/rules')
         .then(res => res.json())
-        .then(files => {
-            if (!files || files.length === 0) {
+        .then(data => {
+            state.onlineRules = data.online_rules || [];
+            const customRules = data.custom_rules || [];
+
+            if (state.onlineRules.length === 0 && customRules.length === 0) {
                 const p = document.createElement('p');
                 p.className = 'card-helper text-center';
                 p.textContent = '没有读取到可用的域名列表文件';
@@ -563,20 +567,45 @@ function loadRulesList() {
                 return;
             }
 
-            files.forEach(file => {
-                const btn = document.createElement('button');
-                btn.className = 'rule-file-btn';
-                btn.textContent = file;
-                btn.addEventListener('click', () => {
-                    // Activate styles
-                    document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
+            // Render Online Rules Group
+            if (state.onlineRules.length > 0) {
+                const title = document.createElement('div');
+                title.className = 'rules-group-title';
+                title.textContent = '自动更新列表 (只读)';
+                listGroup.appendChild(title);
 
-                    // Load content
-                    loadRuleFileContent(file);
+                state.onlineRules.forEach(file => {
+                    const btn = document.createElement('button');
+                    btn.className = 'rule-file-btn';
+                    btn.textContent = '🔒 ' + file;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        loadRuleFileContent(file);
+                    });
+                    listGroup.appendChild(btn);
                 });
-                listGroup.appendChild(btn);
-            });
+            }
+
+            // Render Custom Rules Group
+            if (customRules.length > 0) {
+                const title = document.createElement('div');
+                title.className = 'rules-group-title';
+                title.textContent = '自定义规则列表 (可编辑)';
+                listGroup.appendChild(title);
+
+                customRules.forEach(file => {
+                    const btn = document.createElement('button');
+                    btn.className = 'rule-file-btn';
+                    btn.textContent = '✏️ ' + file;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        loadRuleFileContent(file);
+                    });
+                    listGroup.appendChild(btn);
+                });
+            }
         })
         .catch(err => {
             console.error('Error loading rules files:', err);
@@ -587,6 +616,8 @@ function loadRuleFileContent(file) {
     const textarea = document.getElementById('rules-textarea');
     const saveBtn = document.getElementById('rules-btn-save');
     const label = document.getElementById('rules-current-file-label');
+    
+    const isReadOnly = (state.onlineRules || []).includes(file);
 
     state.selectedRuleFile = file;
     textarea.value = '';
@@ -599,8 +630,17 @@ function loadRuleFileContent(file) {
         .then(text => {
             textarea.value = text;
             textarea.disabled = false;
-            saveBtn.disabled = false;
-            label.textContent = `/opt/mosdns/bin/${file}`;
+            textarea.readOnly = isReadOnly;
+            
+            if (isReadOnly) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = '🔒 只读保护';
+                label.textContent = `/opt/mosdns/bin/${file} (自动下载，只读)`;
+            } else {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 保存域名规则';
+                label.textContent = `/opt/mosdns/bin/${file}`;
+            }
         })
         .catch(err => {
             textarea.placeholder = `拉取域名列表 ${file} 发生故障: ` + err.message;
@@ -613,6 +653,12 @@ function setupRulesManager() {
 
     saveBtn.addEventListener('click', () => {
         if (!state.selectedRuleFile) return;
+        
+        const isReadOnly = (state.onlineRules || []).includes(state.selectedRuleFile);
+        if (isReadOnly) {
+            alert('该列表为自动定时更新的只读列表，不支持手动修改。');
+            return;
+        }
 
         if (!confirm(`【防断网自愈保障】\n修改列表域名后，后端在重新加载 DNS 服务前会自动创建备份；如果重启后本地解析遭遇不可抗拒的故障，系统会自动回滚并还原该文件。\n\n您确认提交修改 '${state.selectedRuleFile}' 吗？`)) return;
 

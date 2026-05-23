@@ -30,12 +30,13 @@ var (
 
 // Hardcoded safe white-listed file basenames to prevent arbitrary path traversal
 var allowedFiles = map[string]string{
-	"config-v5.yaml":    "/opt/mosdns/config-v5.yaml",
-	"china-list.txt":    "/opt/mosdns/bin/china-list.txt",
-	"proxy-list.txt":    "/opt/mosdns/bin/proxy-list.txt",
-	"apple-cn.txt":      "/opt/mosdns/bin/apple-cn.txt",
-	"local-domain.txt":  "/opt/mosdns/bin/local-domain.txt",
-	"direct-domain.txt": "/opt/mosdns/bin/direct-domain.txt",
+	"config-v5.yaml":                "/opt/mosdns/config-v5.yaml",
+	"china-list.txt":                "/opt/mosdns/bin/china-list.txt",
+	"proxy-list.txt":                "/opt/mosdns/bin/proxy-list.txt",
+	"apple-cn.txt":                  "/opt/mosdns/bin/apple-cn.txt",
+	"local-domain.txt":              "/opt/mosdns/bin/local-domain.txt",
+	"direct-domain.txt":             "/opt/mosdns/bin/direct-domain.txt",
+	"geosite_category-games@cn.txt": "/opt/mosdns/bin/geosite_category-games@cn.txt",
 }
 
 // Regex for parsing MosDNS query summary logs:

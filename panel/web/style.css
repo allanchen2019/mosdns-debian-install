@@ -633,6 +633,19 @@ tr:hover td {
     gap: 6px;
 }
 
+.rules-group-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 8px 4px 4px 4px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .rule-file-btn {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.02);

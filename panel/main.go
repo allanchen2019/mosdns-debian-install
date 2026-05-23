@@ -290,20 +290,23 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
-// handleRulesList lists all white-listed rule filenames
+// handleRulesList lists all white-listed rule filenames grouped by category
 func handleRulesList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	var list []string
-	for k := range allowedFiles {
-		if k != "config-v5.yaml" { // Only domain lists
-			list = append(list, k)
-		}
+	
+	onlineRules := []string{"china-list.txt", "proxy-list.txt", "apple-cn.txt"}
+	customRules := []string{"local-domain.txt", "direct-domain.txt", "geosite_category-games@cn.txt"}
+	
+	response := map[string]interface{}{
+		"online_rules": onlineRules,
+		"custom_rules": customRules,
 	}
+	
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+	json.NewEncoder(w).Encode(response)
 }
 
 // handleRuleFileContent reads or writes domain-lists with timestamped safety backups
@@ -327,6 +330,17 @@ func handleRuleFileContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
+		// Online rules read-only protection
+		onlineRules := map[string]bool{
+			"china-list.txt": true,
+			"proxy-list.txt": true,
+			"apple-cn.txt":   true,
+		}
+		if onlineRules[filename] {
+			http.Error(w, "自动更新列表为只读，不允许在网页端修改。", http.StatusForbidden)
+			return
+		}
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Failed to read body", 400)
