@@ -30,15 +30,15 @@ if [ -d "${MOSDNS_DIR}" ]; then
         echo "Updating local repository via git fetch..."
         cd "${MOSDNS_DIR}"
         git fetch --all > /dev/null 2>&1 || true
-        git reset --hard origin/main > /dev/null 2>&1 || true
+        git reset --hard origin/feat/control-panel > /dev/null 2>&1 || true
     else
         echo "Directory exists but is not a git repository. Backing up and re-cloning..."
         mv "${MOSDNS_DIR}" "${MOSDNS_DIR}_bak_$(date +%s)"
-        git clone https://github.com/allanchen2019/mosdns-debian-install.git "${MOSDNS_DIR}"
+        git clone -b feat/control-panel https://github.com/allanchen2019/mosdns-debian-install.git "${MOSDNS_DIR}"
     fi
 else
     echo "Cloning MosDNS deployment repository..."
-    git clone https://github.com/allanchen2019/mosdns-debian-install.git "${MOSDNS_DIR}"
+    git clone -b feat/control-panel https://github.com/allanchen2019/mosdns-debian-install.git "${MOSDNS_DIR}"
 fi
 
 # 4. Set secure but executable permissions
