@@ -714,8 +714,8 @@ function setupRulesManager() {
                 return;
             }
 
-            if (!/^[a-zA-Z0-9_-]+\.txt$/.test(cleanName)) {
-                alert('文件名不合法！必须以 .txt 结尾，且只能包含英文、数字、下划线(_)和连字符(-)。\n例如: my-custom-domains.txt');
+            if (!/^[a-zA-Z0-9_@.-]+\.txt$/.test(cleanName)) {
+                alert('文件名不合法！必须以 .txt 结尾，且只能包含英文、数字、下划线(_)、连字符(-)、点(.)和艾特(@)符号。\n例如: my-custom-domains@cn.txt');
                 return;
             }
 

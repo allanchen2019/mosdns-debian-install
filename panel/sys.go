@@ -43,7 +43,7 @@ func ValidateFilename(filename string) (string, error) {
 		return "/opt/mosdns/config-v5.yaml", nil
 	}
 	// Otherwise it must match the safe pattern and end with .txt
-	matched, err := regexp.MatchString(`^[a-zA-Z0-9_-]+\.txt$`, cleanName)
+	matched, err := regexp.MatchString(`^[a-zA-Z0-9_@.-]+\.txt$`, cleanName)
 	if err != nil || !matched {
 		return "", fmt.Errorf("access denied: invalid filename '%s'", filename)
 	}
