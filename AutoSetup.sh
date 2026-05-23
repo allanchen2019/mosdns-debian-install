@@ -16,9 +16,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # 2. Install minimal required dependencies (No bloated python/pip/git if already present)
-echo "Installing minimal system utilities (wget, unzip, git)..."
+echo "Installing minimal system utilities (wget, unzip, git, golang, gcc)..."
 apt-get update -y > /dev/null 2>&1 || true
-apt-get install -y wget unzip git > /dev/null 2>&1
+apt-get install -y wget unzip git golang-go gcc > /dev/null 2>&1
 
 MOSDNS_DIR="/opt/mosdns"
 

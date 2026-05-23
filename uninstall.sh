@@ -15,16 +15,25 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# 2. Stop and Disable MosDNS Daemon
+# 2. Stop and Disable MosDNS & Control Panel Daemons
 echo "Stopping and disabling MosDNS service..."
 if systemctl is-active --quiet mosdns.service || systemctl is-enabled --quiet mosdns.service 2>/dev/null; then
     systemctl stop mosdns.service || true
     systemctl disable mosdns.service || true
 fi
 
-# Remove systemd service configuration
+echo "Stopping and disabling MosDNS Control Panel service..."
+if systemctl is-active --quiet mosdns-panel.service || systemctl is-enabled --quiet mosdns-panel.service 2>/dev/null; then
+    systemctl stop mosdns-panel.service || true
+    systemctl disable mosdns-panel.service || true
+fi
+
+# Remove systemd service configurations
 if [ -f "/etc/systemd/system/mosdns.service" ]; then
     rm -f "/etc/systemd/system/mosdns.service"
+fi
+if [ -f "/etc/systemd/system/mosdns-panel.service" ]; then
+    rm -f "/etc/systemd/system/mosdns-panel.service"
 fi
 systemctl daemon-reload
 systemctl reset-failed

@@ -149,7 +149,30 @@ if systemctl restart mosdns.service; then
             echo "Warning: MosDNS service is active but local validation query did not respond." >&2
         fi
 
-        # 10. Switch system DNS to localhost after successful verification
+        # 10. Compile and register MosDNS Web Control Panel
+        echo "Building and deploying MosDNS Web Control Panel..."
+        if [ -d "${MOSDNS_DIR}/panel" ]; then
+            cd "${MOSDNS_DIR}/panel"
+            if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
+                echo "MosDNS Web Control Panel compiled successfully."
+                
+                # Check for existing panel registration and clean up
+                if systemctl is-active --quiet mosdns-panel.service || systemctl is-enabled --quiet mosdns-panel.service 2>/dev/null; then
+                    systemctl stop mosdns-panel.service || true
+                    systemctl disable mosdns-panel.service || true
+                fi
+                
+                cp "${MOSDNS_DIR}/panel/mosdns-panel.service" /etc/systemd/system/
+                systemctl daemon-reload
+                systemctl enable mosdns-panel.service
+                echo "Starting MosDNS Control Panel service..."
+                systemctl restart mosdns-panel.service || true
+            else
+                echo "Warning: Control panel compilation failed. You can build it manually under ${MOSDNS_DIR}/panel." >&2
+            fi
+        fi
+
+        # 11. Switch system DNS to localhost after successful verification
         echo "Updating /etc/resolv.conf to point to local DNS..."
         if [ -L "/etc/resolv.conf" ]; then
             rm -f "/etc/resolv.conf"
