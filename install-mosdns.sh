@@ -160,15 +160,18 @@ if systemctl restart mosdns.service; then
         # Try downloading pre-compiled binary first
         PANEL_URL="https://github.com/allanchen2019/mosdns-debian-install/releases/download/latest/mosdns-panel-linux-${arch_suffix}"
         echo "Attempting to download pre-compiled control panel from: ${PANEL_URL}"
-        if wget --timeout=10 --tries=2 -qO "${MOSDNS_BIN_DIR}/mosdns-panel" "${PANEL_URL}"; then
-            chmod +x "${MOSDNS_BIN_DIR}/mosdns-panel"
+        if wget --timeout=10 --tries=2 -qO "${TEMP_DIR}/mosdns-panel" "${PANEL_URL}"; then
+            chmod +x "${TEMP_DIR}/mosdns-panel"
             # Sanity check on the downloaded binary
-            if "${MOSDNS_BIN_DIR}/mosdns-panel" -h 2>&1 | grep -q "port"; then
+            if "${TEMP_DIR}/mosdns-panel" -h 2>&1 | grep -q "port"; then
                 echo "Pre-compiled control panel downloaded and verified successfully."
+                # Safely copy to bin directory (overwrites cleanly)
+                mv -f "${TEMP_DIR}/mosdns-panel" "${MOSDNS_BIN_DIR}/mosdns-panel"
+                chmod 755 "${MOSDNS_BIN_DIR}/mosdns-panel"
                 DEPLOY_PANEL_SUCCESS=true
             else
                 echo "Warning: Downloaded control panel binary failed sanity check." >&2
-                rm -f "${MOSDNS_BIN_DIR}/mosdns-panel"
+                rm -f "${TEMP_DIR}/mosdns-panel"
             fi
         fi
 
