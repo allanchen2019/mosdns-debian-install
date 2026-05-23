@@ -82,6 +82,7 @@ func registerAPIs() {
 	http.HandleFunc("/api/rules", handleRulesList)
 	http.HandleFunc("/api/rules/content", handleRuleFileContent)
 	http.HandleFunc("/api/rules/create", handleRulesCreate)
+	http.HandleFunc("/api/rules/toggle", handleRulesToggle)
 	http.HandleFunc("/api/queries/history", handleQueryHistory)
 	http.HandleFunc("/api/stats/summary", handleStatsSummary)
 
@@ -305,26 +306,39 @@ func handleRulesList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	onlineRulesMap := map[string]bool{
-		"china-list.txt":                 true,
-		"proxy-list.txt":                 true,
-		"apple-cn.txt":                   true,
-		"geosite_category-games@cn.txt": true,
+		"china-list.txt":                  true,
+		"proxy-list.txt":                  true,
+		"apple-cn.txt":                    true,
+		"geosite_steam.txt":               true,
+		"geosite_nintendo.txt":            true,
+		"geosite_playstation.txt":         true,
+		"geosite_epicgames.txt":           true,
+		"geosite_blizzard.txt":            true,
+		"geosite_ea.txt":                  true,
+		"geosite_riot.txt":                true,
+		"geosite_roblox.txt":              true,
+		"geosite_tencent-games.txt":       true,
+		"geosite_mihoyo-cn.txt":           true,
+		"geosite_bilibili-game.txt":       true,
+		"geosite_category-games-other.txt": true,
 	}
 
 	type RuleFileInfo struct {
 		Filename string `json:"filename"`
 		IsOnline bool   `json:"is_online"`
+		Enabled  bool   `json:"enabled"`
 	}
 
 	// Remove duplicates and maintain order
 	seenLocal := make(map[string]bool)
 	var localRules []RuleFileInfo
 	for _, f := range localFiles {
-		if !seenLocal[f] {
-			seenLocal[f] = true
+		if !seenLocal[f.Filename] {
+			seenLocal[f.Filename] = true
 			localRules = append(localRules, RuleFileInfo{
-				Filename: f,
-				IsOnline: onlineRulesMap[f],
+				Filename: f.Filename,
+				IsOnline: onlineRulesMap[f.Filename],
+				Enabled:  f.Enabled,
 			})
 		}
 	}
@@ -332,11 +346,12 @@ func handleRulesList(w http.ResponseWriter, r *http.Request) {
 	seenRemote := make(map[string]bool)
 	var remoteRules []RuleFileInfo
 	for _, f := range remoteFiles {
-		if !seenRemote[f] {
-			seenRemote[f] = true
+		if !seenRemote[f.Filename] {
+			seenRemote[f.Filename] = true
 			remoteRules = append(remoteRules, RuleFileInfo{
-				Filename: f,
-				IsOnline: onlineRulesMap[f],
+				Filename: f.Filename,
+				IsOnline: onlineRulesMap[f.Filename],
+				Enabled:  f.Enabled,
 			})
 		}
 	}
@@ -373,10 +388,21 @@ func handleRuleFileContent(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// Online rules read-only protection
 		onlineRules := map[string]bool{
-			"china-list.txt":                 true,
-			"proxy-list.txt":                 true,
-			"apple-cn.txt":                   true,
-			"geosite_category-games@cn.txt": true,
+			"china-list.txt":                  true,
+			"proxy-list.txt":                  true,
+			"apple-cn.txt":                    true,
+			"geosite_steam.txt":               true,
+			"geosite_nintendo.txt":            true,
+			"geosite_playstation.txt":         true,
+			"geosite_epicgames.txt":           true,
+			"geosite_blizzard.txt":            true,
+			"geosite_ea.txt":                  true,
+			"geosite_riot.txt":                true,
+			"geosite_roblox.txt":              true,
+			"geosite_tencent-games.txt":       true,
+			"geosite_mihoyo-cn.txt":           true,
+			"geosite_bilibili-game.txt":       true,
+			"geosite_category-games-other.txt": true,
 		}
 		if onlineRules[filename] {
 			http.Error(w, "自动更新列表为只读，不允许在网页端修改。", http.StatusForbidden)
@@ -786,5 +812,63 @@ func handleRulesCreate(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"message":  fmt.Sprintf("成功创建列表并激活，已自动挂载至 config-v5.yaml 的 %s 区域中！", configTag),
 		"filename": filename,
+	})
+}
+
+// handleRulesToggle handles enabling or disabling a rule list inside config-v5.yaml files list
+func handleRulesToggle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Filename string `json:"filename"`
+		Tag      string `json:"tag"` // "direct_domain", "local_domain", "remote_domain"
+		Enabled  bool   `json:"enabled"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Bad Request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	filename := strings.TrimSpace(req.Filename)
+	tag := strings.TrimSpace(req.Tag)
+
+	_, err := ValidateFilename(filename)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Dynamic validation on Tag to prevent any unsafe injection
+	validTags := map[string]bool{"direct_domain": true, "local_domain": true, "remote_domain": true}
+	if !validTags[tag] {
+		http.Error(w, "Invalid tag target: "+tag, http.StatusBadRequest)
+		return
+	}
+
+	// Perform the toggle action
+	if err := ToggleFileInDomainSet(tag, filename, req.Enabled); err != nil {
+		http.Error(w, "Failed to toggle rule list status: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Trigger restart and canary verification
+	_, restartErr := ManageService("restart")
+	if restartErr != nil {
+		http.Error(w, "Status updated but failed to restart MosDNS service: "+restartErr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	var msg string
+	if req.Enabled {
+		msg = fmt.Sprintf("成功启用规则列表 '%s'，并已在 config-v5.yaml 中激活使能！", filename)
+	} else {
+		msg = fmt.Sprintf("成功停用规则列表 '%s'，已在 config-v5.yaml 中安全屏蔽并热重载！", filename)
+	}
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": msg,
 	})
 }

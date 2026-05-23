@@ -42,7 +42,7 @@ bootstrap_repo() {
                 local fname=$(basename "$f")
                 if [ "$fname" != "china-list.txt" ] && [ "$fname" != "apple-cn.txt" ] && \
                    [ "$fname" != "proxy-list.txt" ] && [ "$fname" != "cn_ipv4.txt" ] && \
-                   [ "$fname" != "cn_ipv6.txt" ] && [ "$fname" != "geosite_category-games@cn.txt" ]; then
+                   [ "$fname" != "cn_ipv6.txt" ] && [[ ! "$fname" =~ ^geosite_ ]]; then
                     cp "$f" /tmp/mosdns_user_rules/
                     backup_rules=true
                 fi
@@ -194,7 +194,7 @@ while true; do
                                 if [ "$fname" != "china-list.txt" ] && [ "$fname" != "apple-cn.txt" ] && \
                                    [ "$fname" != "proxy-list.txt" ] && [ "$fname" != "cn_ipv4.txt" ] && \
                                    [ "$fname" != "cn_ipv6.txt" ] && [ "$fname" != "local-domain.txt" ] && \
-                                   [ "$fname" != "geosite_category-games@cn.txt" ]; then
+                                   [[ ! "$fname" =~ ^geosite_ ]]; then
                                     rm -f "$f"
                                 fi
                             done

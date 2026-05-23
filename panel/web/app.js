@@ -603,7 +603,12 @@ function renderRulesList() {
             if (state.selectedRuleFile === rule.filename) {
                 btn.classList.add('active');
             }
-            btn.textContent = '🔒 ' + rule.filename;
+            if (!rule.enabled) {
+                btn.classList.add('disabled-state');
+                btn.textContent = '🔒 ' + rule.filename + ' (已停用)';
+            } else {
+                btn.textContent = '🔒 ' + rule.filename;
+            }
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -626,7 +631,12 @@ function renderRulesList() {
             if (state.selectedRuleFile === rule.filename) {
                 btn.classList.add('active');
             }
-            btn.textContent = '✏️ ' + rule.filename;
+            if (!rule.enabled) {
+                btn.classList.add('disabled-state');
+                btn.textContent = '✏️ ' + rule.filename + ' (已停用)';
+            } else {
+                btn.textContent = '✏️ ' + rule.filename;
+            }
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -642,6 +652,8 @@ function loadRuleFileContent(file) {
     const saveBtn = document.getElementById('rules-btn-save');
     const label = document.getElementById('rules-current-file-label');
     const helperCard = document.getElementById('rules-helper-card');
+    const switchContainer = document.getElementById('rules-switch-container');
+    const toggleCheckbox = document.getElementById('rules-toggle-checkbox');
     
     const isReadOnly = (state.onlineRules || []).includes(file);
 
@@ -650,6 +662,27 @@ function loadRuleFileContent(file) {
     textarea.placeholder = `正在拉取 ${file} 过滤域名集...`;
     textarea.disabled = true;
     saveBtn.disabled = true;
+
+    // Load enabled status and tag for switch mapping
+    let activeTag = 'direct_domain';
+    const activeSubtab = state.rulesActiveSubtab;
+    if (activeSubtab === 'remote') {
+        activeTag = 'remote_domain';
+    } else {
+        if (file === 'local-domain.txt') {
+            activeTag = 'local_domain';
+        }
+    }
+    state.rulesCurrentFileTag = activeTag;
+
+    const rulesList = activeSubtab === 'local' ? (state.rulesData.local_rules || []) : (state.rulesData.remote_rules || []);
+    const currentRule = rulesList.find(r => r.filename === file);
+    const isEnabled = currentRule ? currentRule.enabled : true;
+
+    if (switchContainer && toggleCheckbox) {
+        switchContainer.style.display = 'flex';
+        toggleCheckbox.checked = isEnabled;
+    }
 
     fetch(`/api/rules/content?file=${encodeURIComponent(file)}`)
         .then(res => res.text())
@@ -796,6 +829,67 @@ function setupRulesManager() {
             .finally(() => {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '💾 保存域名规则';
+                syncStatus();
+            });
+        });
+    }
+
+    // 4. iOS Switch Enable/Disable Listener
+    const toggleCheckbox = document.getElementById('rules-toggle-checkbox');
+    if (toggleCheckbox) {
+        // Remove existing listener if any by cloning or standard clean binding
+        const newCheckbox = toggleCheckbox.cloneNode(true);
+        toggleCheckbox.parentNode.replaceChild(newCheckbox, toggleCheckbox);
+        
+        newCheckbox.addEventListener('change', (e) => {
+            const targetFile = state.selectedRuleFile;
+            if (!targetFile) return;
+            
+            const targetTag = state.rulesCurrentFileTag || 'direct_domain';
+            const isChecked = e.target.checked;
+            const actionWord = isChecked ? '启用' : '停用';
+            
+            if (!confirm(`【启用/停用确认】\n您确认要 ${actionWord} 规则列表 '${targetFile}' 吗？\n切换状态后，后端会自动重新加载并校验系统主主 DNS 解析。`)) {
+                e.target.checked = !isChecked; // Restore
+                return;
+            }
+            
+            newCheckbox.disabled = true;
+            fetch('/api/rules/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: targetFile,
+                    tag: targetTag,
+                    enabled: isChecked
+                })
+            })
+            .then(async res => {
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`🎉 ${data.message || '切换状态成功！'}`);
+                    // Refresh completely
+                    fetch('/api/rules')
+                        .then(r => r.json())
+                        .then(rdata => {
+                            state.rulesData = rdata;
+                            renderRulesList();
+                            loadRuleFileContent(targetFile);
+                        });
+                } else {
+                    const errMsg = await res.text();
+                    alert(`❌ 操作失败，已自动恢复！\n详情: ${errMsg}`);
+                    e.target.checked = !isChecked;
+                }
+            })
+            .catch(err => {
+                alert('通信故障，操作失败: ' + err.message);
+                e.target.checked = !isChecked;
+            })
+            .finally(() => {
+                newCheckbox.disabled = false;
                 syncStatus();
             });
         });

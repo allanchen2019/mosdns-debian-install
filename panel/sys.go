@@ -28,6 +28,11 @@ var (
 	QueryClientsMu sync.Mutex
 )
 
+type RuleState struct {
+	Filename string `json:"filename"`
+	Enabled  bool   `json:"enabled"`
+}
+
 // Regex for parsing MosDNS query summary logs:
 // e.g. "2026-05-23T09:37:54+08:00 [info] query_summary [cache_hit] qname: www.baidu.com. qtype: 1 ..."
 // or "info summary: qname: www.baidu.com. qtype: 1 ... [cache_hit]"
@@ -391,7 +396,7 @@ func ScrapeMosdnsMetrics() MosdnsMetrics {
 }
 
 // ReadDomainSets parses config-v5.yaml to find files under direct_domain, local_domain, and remote_domain
-func ReadDomainSets() (localFiles []string, remoteFiles []string, err error) {
+func ReadDomainSets() (localFiles []RuleState, remoteFiles []RuleState, err error) {
 	data, err := os.ReadFile("/opt/mosdns/config-v5.yaml")
 	if err != nil {
 		return nil, nil, err
@@ -421,14 +426,35 @@ func ReadDomainSets() (localFiles []string, remoteFiles []string, err error) {
 			currentTag = ""
 			inFiles = false
 		}
-		if inFiles && strings.HasPrefix(trimmed, "-") {
-			// Extract file path
-			fileVal := strings.Trim(strings.TrimPrefix(trimmed, "-"), `" '`)
-			fileVal = filepath.Base(fileVal) // Get just the filename (e.g. china-list.txt)
-			if currentTag == "direct_domain" || currentTag == "local_domain" {
-				localFiles = append(localFiles, fileVal)
-			} else if currentTag == "remote_domain" {
-				remoteFiles = append(remoteFiles, fileVal)
+		if inFiles {
+			// 1. Check active items
+			if strings.HasPrefix(trimmed, "-") {
+				fileVal := strings.Trim(strings.TrimPrefix(trimmed, "-"), `" '`)
+				fileVal = filepath.Base(fileVal) // Get just the filename (e.g. china-list.txt)
+				if strings.HasSuffix(fileVal, ".txt") {
+					state := RuleState{Filename: fileVal, Enabled: true}
+					if currentTag == "direct_domain" || currentTag == "local_domain" {
+						localFiles = append(localFiles, state)
+					} else if currentTag == "remote_domain" {
+						remoteFiles = append(remoteFiles, state)
+					}
+				}
+			}
+			// 2. Check self-describing commented items
+			if strings.HasPrefix(trimmed, "#") && strings.Contains(trimmed, "-") {
+				subStr := strings.TrimSpace(strings.TrimPrefix(trimmed, "#"))
+				if strings.HasPrefix(subStr, "-") {
+					fileVal := strings.Trim(strings.TrimPrefix(subStr, "-"), `" '`)
+					fileVal = filepath.Base(fileVal)
+					if strings.HasSuffix(fileVal, ".txt") {
+						state := RuleState{Filename: fileVal, Enabled: false}
+						if currentTag == "direct_domain" || currentTag == "local_domain" {
+							localFiles = append(localFiles, state)
+						} else if currentTag == "remote_domain" {
+							remoteFiles = append(remoteFiles, state)
+						}
+					}
+				}
 			}
 		}
 	}
@@ -487,6 +513,88 @@ func AddFileToDomainSet(tag string, filename string) error {
 
 	if !inserted {
 		return fmt.Errorf("tag '%s' not found or has no 'files:' section in config-v5.yaml", tag)
+	}
+
+	// Write back
+	return os.WriteFile(configPath, []byte(strings.Join(newLines, "\n")), 0644)
+}
+
+// ToggleFileInDomainSet comments or uncomments a rule list filename under the target tag in config-v5.yaml
+func ToggleFileInDomainSet(tag string, filename string, enable bool) error {
+	configPath := "/opt/mosdns/config-v5.yaml"
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	var newLines []string
+	var currentTag string
+	var inTargetFiles bool
+	var toggled bool
+
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+
+		// Track tag entrance
+		if strings.HasPrefix(trimmed, "- tag:") {
+			currentTag = strings.Trim(strings.TrimPrefix(trimmed, "- tag:"), `" `)
+			inTargetFiles = false
+		}
+
+		// If we are currently inside the target files block
+		if currentTag == tag && inTargetFiles && !toggled {
+			// Determine if this line matches the target filename
+			// Case A: Enabled active line, e.g. - "./filename" or - './filename'
+			if strings.HasPrefix(trimmed, "-") {
+				fileVal := strings.Trim(strings.TrimPrefix(trimmed, "-"), `" '`)
+				if filepath.Base(fileVal) == filename {
+					if !enable {
+						// Comment this line to disable it
+						// Preserve indentation dynamically
+						indentCount := len(line) - len(strings.TrimLeft(line, " "))
+						indent := strings.Repeat(" ", indentCount)
+						line = fmt.Sprintf("%s# - \"./%s\"", indent, filename)
+						toggled = true
+					}
+				}
+			}
+
+			// Case B: Commented disabled line, e.g. # - "./filename"
+			if strings.HasPrefix(trimmed, "#") && strings.Contains(trimmed, "-") {
+				subStr := strings.TrimSpace(strings.TrimPrefix(trimmed, "#"))
+				if strings.HasPrefix(subStr, "-") {
+					fileVal := strings.Trim(strings.TrimPrefix(subStr, "-"), `" '`)
+					if filepath.Base(fileVal) == filename {
+						if enable {
+							// Uncomment this line to enable it
+							indentCount := len(line) - len(strings.TrimLeft(line, " "))
+							indent := strings.Repeat(" ", indentCount)
+							line = fmt.Sprintf("%s- \"./%s\"", indent, filename)
+							toggled = true
+						}
+					}
+				}
+			}
+		}
+
+		newLines = append(newLines, line)
+
+		if currentTag == tag && trimmed == "files:" {
+			inTargetFiles = true
+		}
+		
+		// If we encounter a new plugin/tag structure or exit target block, reset state
+		if inTargetFiles && (strings.HasPrefix(trimmed, "- tag:") || (trimmed != "" && !strings.HasPrefix(trimmed, "-") && !strings.HasPrefix(trimmed, "files:") && !strings.HasPrefix(trimmed, "#"))) {
+			inTargetFiles = false
+		}
+	}
+
+	// If enable is true, and we never found a line to uncomment, it might be a newly added file
+	// We fallback to AddFileToDomainSet
+	if enable && !toggled {
+		return AddFileToDomainSet(tag, filename)
 	}
 
 	// Write back

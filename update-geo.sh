@@ -1,7 +1,7 @@
 #!/bin/bash
 # Description: Automated, verified, isolated update script for MosDNS resource files
 # Author: Antigravity
-# Date: 2026-05-22
+# Date: 2026-05-23
 
 set -euo pipefail
 
@@ -23,12 +23,12 @@ echo "=========================================="
 echo "Starting MosDNS resource files update..."
 echo "=========================================="
 
-# Define upstream URLs (using Loyalsoldier's trusted repositories)
+# Define upstream URLs (using Loyalsoldier's trusted repositories and V2Fly source zip)
 URL_CHINA_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt"
 URL_APPLE_CN="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt"
 URL_PROXY_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt"
-URL_GAMES_CN="https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/category-games-cn"
 URL_GEOIP_CN="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt"
+URL_GAMES_ZIP="https://github.com/v2fly/domain-list-community/archive/2fed2eca355a003db3cc4ada1c58c49be876c6a4.zip"
 
 # 2. Download files to temporary directory with retries and timeout
 download_file() {
@@ -45,15 +45,108 @@ download_file() {
 if ! download_file "${URL_CHINA_LIST}" "${TEMP_DIR}/china-list.txt" || \
    ! download_file "${URL_APPLE_CN}" "${TEMP_DIR}/apple-cn.txt" || \
    ! download_file "${URL_PROXY_LIST}" "${TEMP_DIR}/proxy-list.txt" || \
-   ! download_file "${URL_GAMES_CN}" "${TEMP_DIR}/geosite_category-games@cn.txt.raw" || \
-   ! download_file "${URL_GEOIP_CN}" "${TEMP_DIR}/cn.txt"; then
+   ! download_file "${URL_GEOIP_CN}" "${TEMP_DIR}/cn.txt" || \
+   ! download_file "${URL_GAMES_ZIP}" "${TEMP_DIR}/domain-list-community.zip"; then
     echo "Fatal: Resource downloading failed. Aborting update." >&2
     exit 1
 fi
 
+# 2.3 Unzip domain-list-community archive
+echo "Extracting domain-list-community archive..."
+unzip -q -d "${TEMP_DIR}" "${TEMP_DIR}/domain-list-community.zip"
+EXTRACTED_DIR=$(find "${TEMP_DIR}" -maxdepth 1 -type d -name "domain-list-community-*" | head -n 1)
+if [ -z "${EXTRACTED_DIR}" ] || [ ! -d "${EXTRACTED_DIR}/data" ]; then
+    echo "Fatal: Failed to extract domain-list-community." >&2
+    exit 1
+fi
+DATA_DIR="${EXTRACTED_DIR}/data"
+
 # 2.5 Clean and format the games list to keep pure standard domain list formats
-echo "Processing China games list..."
-grep -E -v "^(#|include:)" "${TEMP_DIR}/geosite_category-games@cn.txt.raw" | grep -v "^$" | sed 's/ @.*//' > "${TEMP_DIR}/geosite_category-games@cn.txt" || true
+echo "Processing and compiling game lists from archive..."
+
+# Declare the recursive include resolver
+resolve_include() {
+    local file_name=$1
+    local file_path="${DATA_DIR}/${file_name}"
+    
+    if [ ! -f "${file_path}" ]; then
+        echo "Warning: file ${file_name} not found in data dir" >&2
+        return
+    fi
+    
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Trim leading/trailing spaces natively
+        line="${line#${line%%[![:space:]]*}}"
+        line="${line%${line##*[![:space:]]}}"
+        # Ignore comments and empty lines
+        if [[ -z "$line" || "$line" =~ ^# ]]; then
+            continue
+        fi
+        
+        if [[ "$line" =~ ^include: ]]; then
+            local inc_name=${line#include:}
+            inc_name=$(echo "$inc_name" | sed 's/ @.*//')
+            resolve_include "$inc_name"
+        else
+            local clean_line=$(echo "$line" | sed 's/ @.*//')
+            if [ -n "${clean_line}" ]; then
+                echo "${clean_line}"
+            fi
+        fi
+    done < "${file_path}"
+}
+
+# Compile the 11 major categories
+echo "Compiling major game lists..."
+declare -a MAJOR_CATEGORIES=("steam" "nintendo" "playstation" "epicgames" "blizzard" "ea" "riot" "roblox" "tencent-games" "mihoyo-cn" "bilibili-game")
+
+for cat in "${MAJOR_CATEGORIES[@]}"; do
+    echo "Compiling geosite_${cat}.txt..."
+    resolve_include "${cat}" | sort -u > "${TEMP_DIR}/geosite_${cat}.txt" || true
+done
+
+# Compile category-games-other
+echo "Compiling category-games-other..."
+is_major() {
+    local cat=$1
+    for major in "${MAJOR_CATEGORIES[@]}"; do
+        if [ "${cat}" = "${major}" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+compile_other() {
+    local parent=$1
+    local file_path="${DATA_DIR}/${parent}"
+    if [ ! -f "${file_path}" ]; then
+        return
+    fi
+    
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="${line#${line%%[![:space:]]*}}"
+        line="${line%${line##*[![:space:]]}}"
+        if [[ -z "$line" || "$line" =~ ^# ]]; then
+            continue
+        fi
+        
+        if [[ "$line" =~ ^include: ]]; then
+            local inc_name=${line#include:}
+            inc_name=$(echo "$inc_name" | sed 's/ @.*//')
+            if ! is_major "${inc_name}"; then
+                resolve_include "${inc_name}"
+            fi
+        else
+            local clean_line=$(echo "$line" | sed 's/ @.*//')
+            if [ -n "${clean_line}" ]; then
+                echo "${clean_line}"
+            fi
+        fi
+    done < "${file_path}"
+}
+
+(compile_other "category-games-cn" && compile_other "category-games-!cn") | sort -u > "${TEMP_DIR}/geosite_category-games-other.txt" || true
 
 # 3. Process GeoIP list (split CN IP into IPv4 and IPv6)
 echo "Processing China IP list..."
@@ -87,18 +180,43 @@ echo "Validating downloaded resource files..."
 if ! validate_file "${TEMP_DIR}/china-list.txt" 10000 200000 || \
    ! validate_file "${TEMP_DIR}/apple-cn.txt" 100 2000 || \
    ! validate_file "${TEMP_DIR}/proxy-list.txt" 1000 20000 || \
-   ! validate_file "${TEMP_DIR}/geosite_category-games@cn.txt" 10 100 || \
    ! validate_file "${TEMP_DIR}/cn_ipv4.txt" 1000 20000 || \
    ! validate_file "${TEMP_DIR}/cn_ipv6.txt" 100 2000; then
-    echo "Fatal: Resource validation failed. Aborting update." >&2
+    echo "Fatal: Core resource validation failed. Aborting update." >&2
     exit 1
 fi
+
+declare -a GAME_FILES=(
+    "geosite_steam.txt"
+    "geosite_nintendo.txt"
+    "geosite_playstation.txt"
+    "geosite_epicgames.txt"
+    "geosite_blizzard.txt"
+    "geosite_ea.txt"
+    "geosite_riot.txt"
+    "geosite_roblox.txt"
+    "geosite_tencent-games.txt"
+    "geosite_mihoyo-cn.txt"
+    "geosite_bilibili-game.txt"
+    "geosite_category-games-other.txt"
+)
+
+for gf in "${GAME_FILES[@]}"; do
+    if ! validate_file "${TEMP_DIR}/${gf}" 2 15; then
+        echo "Fatal: Game list validation failed for ${gf}. Aborting update." >&2
+        exit 1
+    fi
+done
 
 echo "All files validated successfully."
 
 # 5. Prepare backup of current files in isolated backup-geo directory
 mkdir -p "${BACKUP_DIR}"
-declare -a FILES=("china-list.txt" "apple-cn.txt" "proxy-list.txt" "geosite_category-games@cn.txt" "cn_ipv4.txt" "cn_ipv6.txt")
+declare -a FILES=("china-list.txt" "apple-cn.txt" "proxy-list.txt" "cn_ipv4.txt" "cn_ipv6.txt" \
+                  "geosite_steam.txt" "geosite_nintendo.txt" "geosite_playstation.txt" \
+                  "geosite_epicgames.txt" "geosite_blizzard.txt" "geosite_ea.txt" \
+                  "geosite_riot.txt" "geosite_roblox.txt" "geosite_tencent-games.txt" \
+                  "geosite_mihoyo-cn.txt" "geosite_bilibili-game.txt" "geosite_category-games-other.txt")
 
 for file in "${FILES[@]}"; do
     if [ -f "${MOSDNS_BIN_DIR}/${file}" ]; then

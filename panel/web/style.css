@@ -1051,3 +1051,75 @@ tr:hover td {
         height: 480px;
     }
 }
+
+/* iOS Glassmorphic Switch Styles */
+.rules-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 12px;
+}
+
+.switch-label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: .3s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #a1a1aa;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+input:checked + .slider {
+    background-color: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+input:checked + .slider:before {
+    transform: translateX(16px);
+    background-color: #a78bfa;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.6);
+}
+
+/* Semi-transparent state for disabled rules in sidebar */
+.rule-file-btn.disabled-state {
+    opacity: 0.45;
+    background: rgba(255, 255, 255, 0.005) !important;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, 0.2);
+}
