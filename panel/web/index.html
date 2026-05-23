@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MosDNS 智能高可用控制面板</title>
+    <meta name="description" content="基于 Go 与 SQLite 开发的生产级高可用 MosDNS 管理控制系统">
+    <!-- Modern typography from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">M</div>
+                <div class="brand-title">
+                    <h1>MosDNS Panel</h1>
+                    <span class="brand-version">v5.0 Stable</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" id="nav-btn-dashboard" data-tab="dashboard">
+                    <span class="nav-icon">📊</span> 仪表主页
+                </button>
+                <button class="nav-item" id="nav-btn-config" data-tab="config">
+                    <span class="nav-icon">⚙️</span> 配置编辑
+                </button>
+                <button class="nav-item" id="nav-btn-rules" data-tab="rules">
+                    <span class="nav-icon">📝</span> 域名列表
+                </button>
+                <button class="nav-item" id="nav-btn-queries" data-tab="queries">
+                    <span class="nav-icon">🔎</span> 解析审计
+                </button>
+                <button class="nav-item" id="nav-btn-maintenance" data-tab="maintenance">
+                    <span class="nav-icon">🛠️</span> 系统维护
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-badge-container">
+                    <div id="mosdns-ping-lamp" class="status-lamp lamp-offline"></div>
+                    <span id="mosdns-ping-text">DNS 离线</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Panel Content -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="content-header">
+                <div class="header-info">
+                    <h2 id="current-tab-title">控制主页</h2>
+                    <p id="current-tab-desc">实时监控 MosDNS 解析数据与主控系统状态</p>
+                </div>
+                <div class="service-quick-actions">
+                    <button class="action-btn btn-restart" id="header-btn-restart">🔄 重启服务</button>
+                    <button class="action-btn btn-start" id="header-btn-start">▶️ 启动</button>
+                    <button class="action-btn btn-stop" id="header-btn-stop">⏹️ 停止</button>
+                </div>
+            </header>
+
+            <!-- =================== TAB 1: DASHBOARD =================== -->
+            <section class="tab-panel active" id="tab-dashboard">
+                <!-- Status Row -->
+                <div class="metrics-grid">
+                    <div class="metric-card glass-card">
+                        <div class="card-glow glow-green"></div>
+                        <div class="metric-header">
+                            <span class="metric-title">服务运行时间</span>
+                            <span class="metric-icon">⏰</span>
+                        </div>
+                        <div class="metric-value" id="dash-uptime">00:00:00</div>
+                        <div class="metric-footer text-green">● 守护进程运行正常</div>
+                    </div>
+                    <div class="metric-card glass-card">
+                        <div class="card-glow glow-blue"></div>
+                        <div class="metric-header">
+                            <span class="metric-title">24H 请求总量</span>
+                            <span class="metric-icon">📈</span>
+                        </div>
+                        <div class="metric-value" id="dash-total-queries">0</div>
+                        <div class="metric-footer" id="dash-avg-duration">平均耗时: 0 ms</div>
+                    </div>
+                    <div class="metric-card glass-card">
+                        <div class="card-glow glow-purple"></div>
+                        <div class="metric-header">
+                            <span class="metric-title">24H 乐观缓存命中</span>
+                            <span class="metric-icon">⚡</span>
+                        </div>
+                        <div class="metric-value" id="dash-cache-rate">0.0%</div>
+                        <div class="metric-footer" id="dash-cache-hits">缓存响应时间: 0 ms</div>
+                    </div>
+                    <div class="metric-card glass-card">
+                        <div class="card-glow glow-cyan"></div>
+                        <div class="metric-header">
+                            <span class="metric-title">全局内存缓存容量</span>
+                            <span class="metric-icon">💾</span>
+                        </div>
+                        <div class="metric-value" id="dash-cache-size">0</div>
+                        <div class="metric-footer" id="dash-global-cache-rate">全局命中率: 0.0%</div>
+                    </div>
+                </div>
+
+                <!-- Hardware Monitor -->
+                <div class="dashboard-middle-row">
+                    <div class="system-monitor-card glass-card">
+                        <h3>📊 硬件资源监控</h3>
+                        <div class="sys-progress-group">
+                            <div class="progress-info">
+                                <span>CPU 使用率</span>
+                                <span id="cpu-percent-txt">0%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill fill-cpu" id="cpu-percent-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="sys-progress-group">
+                            <div class="progress-info">
+                                <span>内存分配情况</span>
+                                <span id="ram-percent-txt">0% (0MB / 0MB)</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill fill-ram" id="ram-percent-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Analytics Quick Graph -->
+                    <div class="chart-card glass-card">
+                        <h3>📈 24H 解析请求量趋势</h3>
+                        <div class="canvas-container">
+                            <canvas id="queryTrendCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Domain and Client Lists -->
+                <div class="dashboard-lists-row">
+                    <div class="domain-rank-card glass-card">
+                        <h3>👑 24H 热门查询域名 Top 10</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>排名</th>
+                                        <th>域名</th>
+                                        <th>请求次数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-top-domains-body">
+                                    <tr><td colspan="3" class="text-center">暂无分析数据</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="upstream-rank-card glass-card">
+                        <h3>🎯 解析策略命中分布</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>分流策略</th>
+                                        <th>命中次数</th>
+                                        <th>占比</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-status-dist-body">
+                                    <tr><td colspan="3" class="text-center">暂无分析数据</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================== TAB 2: CONFIG =================== -->
+            <section class="tab-panel" id="tab-config">
+                <div class="editor-layout glass-card">
+                    <div class="editor-header">
+                        <div class="editor-badge">YAML CONFIG</div>
+                        <span class="editor-path">/opt/mosdns/config-v5.yaml</span>
+                        <div class="editor-actions">
+                            <button class="editor-btn btn-save" id="config-btn-save">💾 保存并应用</button>
+                        </div>
+                    </div>
+                    <div class="editor-body">
+                        <textarea class="code-editor" id="config-textarea" spellcheck="false" placeholder="正在读取 MosDNS 核心配置文件..."></textarea>
+                    </div>
+                    <div class="editor-console console-collapsed" id="config-console-container">
+                        <div class="console-header" id="config-console-header">
+                            <span>🛠️ 配置预检控制台</span>
+                            <span class="console-collapse-arrow">▲</span>
+                        </div>
+                        <pre class="console-pre" id="config-console-pre">等待保存预检...</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================== TAB 3: RULES =================== -->
+            <section class="tab-panel" id="tab-rules">
+                <div class="rules-container">
+                    <div class="rules-sidebar glass-card">
+                        <h3>📂 列表选择</h3>
+                        <div class="rules-list-group" id="rules-file-selector">
+                            <!-- Dynamic list buttons -->
+                        </div>
+                    </div>
+                    <div class="rules-main glass-card">
+                        <div class="editor-header">
+                            <div class="editor-badge">DOMAIN SET</div>
+                            <span class="editor-path" id="rules-current-file-label">请选择域名过滤规则列表</span>
+                            <div class="editor-actions">
+                                <button class="editor-btn btn-save" id="rules-btn-save" disabled>💾 保存域名规则</button>
+                            </div>
+                        </div>
+                        <div class="editor-body">
+                            <textarea class="code-editor" id="rules-textarea" spellcheck="false" placeholder="请在左侧选择需要编辑的白名单/防污染域名列表文件。" disabled></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================== TAB 4: AUDIT =================== -->
+            <section class="tab-panel" id="tab-queries">
+                <div class="audit-layout glass-card">
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" id="audit-search-input" placeholder="输入搜索域名、客户端 IP 或分流策略...">
+                        <button class="filter-btn" id="audit-btn-search">🔍 筛选</button>
+                        <button class="filter-btn btn-reset" id="audit-btn-reset">🔄 重置</button>
+                    </div>
+                    <div class="table-container audit-table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>解析时间</th>
+                                    <th>客户端 IP</th>
+                                    <th>查询域名</th>
+                                    <th>类型</th>
+                                    <th>分流策略</th>
+                                    <th>响应耗时</th>
+                                    <th>响应上游</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-table-body">
+                                <tr><td colspan="7" class="text-center">加载解析审计历史中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-bar">
+                        <button class="page-btn" id="audit-prev-btn">◀ 上一页</button>
+                        <span class="page-info" id="audit-page-info">第 1 页</span>
+                        <button class="page-btn" id="audit-next-btn">下一页 ▶</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================== TAB 5: MAINTENANCE =================== -->
+            <section class="tab-panel" id="tab-maintenance">
+                <div class="maintenance-grid">
+                    <!-- Actions -->
+                    <div class="maintenance-actions-card glass-card">
+                        <h3>🛠️ 在线运维指令</h3>
+                        <p class="card-helper">对关键域名规则和 MosDNS 二进制主程序进行一键防断网安全更新。</p>
+                        
+                        <div class="maint-action-group">
+                            <div class="action-meta">
+                                <h4>🔄 更新 DNS 规则数据包</h4>
+                                <p>重新下载中国大陆域名直连、苹果分流、海外防污染及 CN IP 段数据</p>
+                            </div>
+                            <button class="maint-btn" id="maint-btn-geo">一键规则升级</button>
+                        </div>
+
+                        <div class="maint-action-group">
+                            <div class="action-meta">
+                                <h4>🚀 升级 MosDNS 二进制程序</h4>
+                                <p>检测并拉取 GitHub 官方最新 Linux 架构二进制包，热重载自愈升级</p>
+                            </div>
+                            <button class="maint-btn" id="maint-btn-bin">一键二进制升级</button>
+                        </div>
+                    </div>
+
+                    <!-- Console logs -->
+                    <div class="maintenance-logs-card glass-card">
+                        <div class="maint-logs-header">
+                            <h3>📋 终端执行日志 / 系统实时运行日志</h3>
+                            <div class="console-mode-selector">
+                                <button class="console-mode-btn active" id="btn-mode-maint">运维输出</button>
+                                <button class="console-mode-btn" id="btn-mode-sys">系统日志</button>
+                            </div>
+                        </div>
+                        <div class="terminal-body" id="maint-terminal">
+                            <div class="terminal-line text-dim">// 终端处于空闲状态，等待发起升级操作或切换至系统日志...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

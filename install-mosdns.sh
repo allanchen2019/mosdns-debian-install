@@ -43,6 +43,10 @@ esac
 
 # 3. Prepare Directories (Idempotent)
 mkdir -p "${MOSDNS_BIN_DIR}"
+mkdir -p "/var/log/mosdns"
+touch "/var/log/mosdns/mosdns.log"
+chmod 755 "/var/log/mosdns"
+chmod 644 "/var/log/mosdns/mosdns.log"
 
 # 4. Clean up previous MosDNS systemd services if exist
 echo "Checking for previous MosDNS service registrations..."
@@ -149,7 +153,61 @@ if systemctl restart mosdns.service; then
             echo "Warning: MosDNS service is active but local validation query did not respond." >&2
         fi
 
-        # 10. Switch system DNS to localhost after successful verification
+        # 10. Deploy MosDNS Web Control Panel (Prefer pre-compiled binary, fallback to compilation)
+        echo "Deploying MosDNS Web Control Panel..."
+        DEPLOY_PANEL_SUCCESS=false
+        
+        # Try downloading pre-compiled binary first
+        PANEL_URL="https://github.com/allanchen2019/mosdns-debian-install/releases/download/latest/mosdns-panel-linux-${arch_suffix}"
+        echo "Attempting to download pre-compiled control panel from: ${PANEL_URL}"
+        if wget --timeout=10 --tries=2 -qO "${TEMP_DIR}/mosdns-panel" "${PANEL_URL}"; then
+            chmod +x "${TEMP_DIR}/mosdns-panel"
+            # Sanity check on the downloaded binary
+            if "${TEMP_DIR}/mosdns-panel" -h 2>&1 | grep -q "port"; then
+                echo "Pre-compiled control panel downloaded and verified successfully."
+                # Safely copy to bin directory (overwrites cleanly)
+                mv -f "${TEMP_DIR}/mosdns-panel" "${MOSDNS_BIN_DIR}/mosdns-panel"
+                chmod 755 "${MOSDNS_BIN_DIR}/mosdns-panel"
+                DEPLOY_PANEL_SUCCESS=true
+            else
+                echo "Warning: Downloaded control panel binary failed sanity check." >&2
+                rm -f "${TEMP_DIR}/mosdns-panel"
+            fi
+        fi
+
+        # Fallback to local compilation if download failed/unverified
+        if [ "${DEPLOY_PANEL_SUCCESS}" = "false" ]; then
+            echo "Falling back to local compilation from source..."
+            if [ -d "${MOSDNS_DIR}/panel" ]; then
+                cd "${MOSDNS_DIR}/panel"
+                # Ensure dependencies are tidy and downloaded before compilation
+                go mod tidy > /dev/null 2>&1 || true
+                if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
+                    echo "MosDNS Web Control Panel compiled successfully from source."
+                    DEPLOY_PANEL_SUCCESS=true
+                else
+                    echo "Warning: Control panel compilation failed." >&2
+                fi
+            fi
+        fi
+
+        if [ "${DEPLOY_PANEL_SUCCESS}" = "true" ]; then
+            # Check for existing panel registration and clean up
+            if systemctl is-active --quiet mosdns-panel.service || systemctl is-enabled --quiet mosdns-panel.service 2>/dev/null; then
+                systemctl stop mosdns-panel.service || true
+                systemctl disable mosdns-panel.service || true
+            fi
+            
+            cp "${MOSDNS_DIR}/panel/mosdns-panel.service" /etc/systemd/system/
+            systemctl daemon-reload
+            systemctl enable mosdns-panel.service
+            echo "Starting MosDNS Control Panel service..."
+            systemctl restart mosdns-panel.service || true
+        else
+            echo "Warning: Failed to deploy control panel. You can build it manually under ${MOSDNS_DIR}/panel." >&2
+        fi
+
+        # 11. Switch system DNS to localhost after successful verification
         echo "Updating /etc/resolv.conf to point to local DNS..."
         if [ -L "/etc/resolv.conf" ]; then
             rm -f "/etc/resolv.conf"

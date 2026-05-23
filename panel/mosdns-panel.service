@@ -1,0 +1,15 @@
+[Unit]
+Description=MosDNS Control Panel Daemon
+After=network.target mosdns.service
+Wants=mosdns.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/mosdns
+ExecStart=/opt/mosdns/bin/mosdns-panel -port 8080 -host 0.0.0.0
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target
