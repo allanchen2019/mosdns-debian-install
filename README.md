@@ -85,10 +85,21 @@ This project delivers a highly-optimized, low-latency, anti-pollution, and self-
 
 ## 🛠️ Usage & Commands
 
-### 1-Click Installation
+### 1-Click Installation (amd64 & arm64)
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
+> [!TIP]
+> For ultra-low RAM devices (< 256MB), the installer automatically downloads pre-compiled binaries from GitHub Releases to prevent OOM errors, with a fallback to local Go compilation (`go build`) as backup.
+
+### 🖥️ Premium Glassmorphic Web Control Panel
+After installation, a lightweight daemon `mosdns-panel.service` is spawned automatically:
+* **Access URL**: `http://<YOUR_SERVER_IP>:8080` (accessible within your local LAN, featuring a dark-mode glassmorphic interface).
+* **Key Capabilities**:
+  * **Real-time Dashboard**: Dynamic Canvas charts mapping 24H queries alongside Prometheus cache size & high-precision hit rate scraping.
+  * **Structured Query Audit**: Live stream query logs (Client IP, Domain, QType, Cache/Upstream status, Duration) persistent to SQLite.
+  * **Configuration Editor**: Safely modify and syntax check your `config-v5.yaml` and blocklists directly in the browser.
+  * **Live Console**: Real-time Systemd logs stream and one-click execution of updates.
 
 ### Self-Healing Binary Update
 ```bash
@@ -102,14 +113,19 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 
 ### Service Controls & Logging
 ```bash
-# Check status
+# Check MosDNS Core status
 systemctl status mosdns.service
 
-# View real-time query logging
-tail -f /var/log/mosdns/mosdns.log
+# Check Web Panel status
+systemctl status mosdns-panel.service
 
-# Check weekly update timers
+# View weekly update timers
 systemctl status mosdns-update.timer
+```
+
+### Uninstallation (cleanly sweeps all files and panel service daemons)
+```bash
+/opt/mosdns/uninstall.sh
 ```
 
 ---
