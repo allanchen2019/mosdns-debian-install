@@ -8,12 +8,13 @@
 
 有关更多详细信息，请参阅[此仓库](https://github.com/allanchen2019/ospf-over-wireguard)。
 
-### 一键安装 (amd64 & arm64):
+### 一键多功能交互菜单 (主入口，支持安装、升级与卸载):
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
 > [!TIP]
-> 针对内存小于 256MB 的超低配置环境，安装脚本会自动检测并从 GitHub Releases 接口安全下载已由 CI 预编译好的二进制文件以规避本地编译 OOM，同时会自动降级为本地源码编译（`go build`）作为兜底备份，实现 100% 极速免编译部署。
+> 运行此命令将直接启动 **MosDNS 终端图形交互菜单**，支持一键安装、更新 Geo 规则、热升级主程序、彻底卸载等。
+> 针对内存小于 256MB 的超低配置环境，安装菜单选项会自动检测并从 GitHub Releases 接口安全下载已由 CI 预编译好的二进制文件以规避本地编译 OOM，同时会自动降级为本地源码编译（`go build`）作为兜底备份，实现 100% 极速免编译部署。
 
 ### 🖥️ MosDNS 毛玻璃 Web 控制面板:
 一键部署完成后，系统会自动拉起 `mosdns-panel.service` 控制面板守护进程：
