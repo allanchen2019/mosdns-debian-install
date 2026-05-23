@@ -49,12 +49,31 @@ jobs:
             mosdns-panel-linux-amd64
             mosdns-panel-linux-arm64
 
-      - name: Release Latest Binaries
+      - name: Release Binaries
         uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # v1.14.0
         with:
           allowUpdates: true
-          tag: latest
-          name: Latest Precompiled Panel Binaries
-          prerelease: true
+          tag: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          name: ${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || 'Latest Precompiled Panel Binaries' }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          body: |
+            ### 🚀 特性概述 (Feature Overview)
+            - **域名列表子 Tab 分类**：在 Web 控制面板中将域名过滤规则智能按“直连本地”和“代理远程”两大类 Tab 独立分组。
+            - **只读与自定义编辑区分**：自动拉取的在线列表自动标志为只读（🔒 只读保护），用户自定义列表可编辑（✏️ 铅笔标志）。
+            - **一键新建自定义列表**：支持在 Tab 界面直接新建 `.txt` 规则文件，且自动填充格式指导与编写示例模板，并无损挂载到 `config-v5.yaml` 对应 files 段。
+            - **高可用配置自愈防护**：在修改 `config-v5.yaml` 或域名列表前自动创建物理备份，检测（Canary check）失败 2 秒内秒级回滚，保证 DNS 核心解析绝不中断。
+            - **硬件与性能实时监控**：基于 CPU/RAM 读数与 Prometheus API 实时采集内存乐观缓存命中率、缓存大小趋势。
+            
+            ### 💾 安装指导 (Installation Guide)
+            在 Debian/Ubuntu 上执行以下一键交互脚本即可安装、重装或升级 MosDNS 服务与 Web 面板：
+            ```bash
+            bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
+            ```
+            针对内存小于 256MB 的超低配置设备，脚本会自动判定并从 GitHub Releases 中安全下载 CI 编译好的免编译二进制文件。
+            
+            ### 📝 使用说明 (Usage Instructions)
+            - **Web 控制面板访问**：打开浏览器访问 `http://<您的服务器IP>:8080` 进入控制面板。
+            - **域名过滤管理**：进入“域名列表”选项卡，在子 Tab 切换并编辑，点击“保存域名规则”后系统将执行预检、备份和自检重启。
+            - **定时自愈任务**：系统已注册 Systemd 定时器每周日凌晨 04:00 自动更新 Geo 规则并重载自测。
           artifacts: "mosdns-panel-linux-amd64,mosdns-panel-linux-arm64"
           token: ${{ secrets.GITHUB_TOKEN }}
