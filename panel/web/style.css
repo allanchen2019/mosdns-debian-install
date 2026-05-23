@@ -316,6 +316,7 @@ body {
 .glow-green { background-color: var(--neon-green); }
 .glow-blue { background-color: var(--neon-blue); }
 .glow-purple { background-color: var(--neon-purple); }
+.glow-cyan { background-color: var(--neon-cyan); }
 
 /* Metrics Row (Dashboard) */
 .metrics-grid {

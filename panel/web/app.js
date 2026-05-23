@@ -122,7 +122,7 @@ function syncStatus() {
             updatePingIndicator(true, data.service_active);
             
             // Uptime format
-            const uptime = data["panel_uptime_seconds: "] || 0;
+            const uptime = data.panel_uptime_seconds || 0;
             document.getElementById('dash-uptime').textContent = formatSeconds(uptime);
 
             // RAM Stats
@@ -139,6 +139,17 @@ function syncStatus() {
             const cpuPercent = Math.round(data.cpu_usage_percent || 0);
             document.getElementById('cpu-percent-txt').textContent = `${cpuPercent}%`;
             document.getElementById('cpu-percent-bar').style.width = `${cpuPercent}%`;
+
+            // Global MosDNS Cache Stats
+            if (data.service_active) {
+                const cacheSize = data.mosdns_cache_size || 0;
+                const globalHitRate = data.mosdns_cache_hit_rate || 0;
+                document.getElementById('dash-cache-size').textContent = cacheSize.toLocaleString();
+                document.getElementById('dash-global-cache-rate').textContent = `全局命中率: ${globalHitRate.toFixed(1)}%`;
+            } else {
+                document.getElementById('dash-cache-size').textContent = '-';
+                document.getElementById('dash-global-cache-rate').textContent = '服务已停止';
+            }
         })
         .catch(() => {
             updatePingIndicator(false, false);

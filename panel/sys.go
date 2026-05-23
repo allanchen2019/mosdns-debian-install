@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -338,4 +339,60 @@ func broadcastQuery(q QueryLog) {
 		default:
 		}
 	}
+}
+
+type MosdnsMetrics struct {
+	CacheSize    int     `json:"mosdns_cache_size"`
+	CacheQueries int     `json:"mosdns_cache_queries"`
+	CacheHits    int     `json:"mosdns_cache_hits"`
+	CacheHitRate float64 `json:"mosdns_cache_hit_rate"`
+}
+
+// ScrapeMosdnsMetrics scrapes Prometheus metrics from the local MosDNS API server
+func ScrapeMosdnsMetrics() MosdnsMetrics {
+	var m MosdnsMetrics
+	// Set default safe client with timeout to prevent block
+	client := &http.Client{Timeout: 1 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:9080/metrics")
+	if err != nil {
+		return m
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+		name := fields[0]
+		valStr := fields[1]
+		val, err := strconv.ParseFloat(valStr, 64)
+		if err != nil {
+			continue
+		}
+
+		cleanName := name
+		if idx := strings.Index(name, "{"); idx != -1 {
+			cleanName = name[:idx]
+		}
+
+		switch cleanName {
+		case "mosdns_cache_size_current":
+			m.CacheSize = int(val)
+		case "mosdns_cache_query_total":
+			m.CacheQueries = int(val)
+		case "mosdns_cache_hit_total":
+			m.CacheHits = int(val)
+		}
+	}
+
+	if m.CacheQueries > 0 {
+		m.CacheHitRate = (float64(m.CacheHits) / float64(m.CacheQueries)) * 100.0
+	}
+	return m
 }

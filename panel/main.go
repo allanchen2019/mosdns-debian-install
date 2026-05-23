@@ -141,13 +141,20 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	totalMem, freeMem := getRAMStats()
 	cpuUsage := getCPUUsage()
 
+	// 3. Scrape MosDNS native API metrics
+	metrics := ScrapeMosdnsMetrics()
+
 	response := map[string]interface{}{
-		"panel_uptime_seconds: ": time.Since(startTime) / time.Second,
-		"service_active":         isActive,
-		"service_log":            serviceStatus,
-		"ram_total_kb":           totalMem,
-		"ram_free_kb":            freeMem,
-		"cpu_usage_percent":      cpuUsage,
+		"panel_uptime_seconds":  time.Since(startTime) / time.Second,
+		"service_active":        isActive,
+		"service_log":           serviceStatus,
+		"ram_total_kb":          totalMem,
+		"ram_free_kb":           freeMem,
+		"cpu_usage_percent":     cpuUsage,
+		"mosdns_cache_size":     metrics.CacheSize,
+		"mosdns_cache_queries":  metrics.CacheQueries,
+		"mosdns_cache_hits":     metrics.CacheHits,
+		"mosdns_cache_hit_rate": metrics.CacheHitRate,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
