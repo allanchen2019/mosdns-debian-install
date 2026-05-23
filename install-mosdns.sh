@@ -115,11 +115,23 @@ if ! "${NEW_BIN}" version > /dev/null 2>&1; then
     exit 1
 fi
 INSTALL_VER=$("${NEW_BIN}" version || echo "unknown")
-echo "Sanity check passed. Ready to install version: ${INSTALL_VER}"
-
 # Deploy binary
 mv "${NEW_BIN}" "${MOSDNS_BIN_DIR}/mosdns"
 chmod 755 "${MOSDNS_BIN_DIR}/mosdns"
+
+# 6.5 Ensure default custom filter lists exist to prevent startup failure
+echo "Verifying presence of default custom domain filter lists..."
+for list_file in "direct-domain.txt" "geosite_category-games@cn.txt" "local-domain.txt"; do
+    target_list_path="${MOSDNS_BIN_DIR}/${list_file}"
+    if [ ! -f "${target_list_path}" ]; then
+        echo "Creating default empty placeholder for custom list: ${list_file}"
+        cat << EOF > "${target_list_path}"
+# MosDNS 自定义域名列表 - ${list_file}
+# 每行输入一个规则，例如 domain:example.com
+EOF
+        chmod 644 "${target_list_path}"
+    fi
+done
 
 # 7. Initialize Geo resource files by invoking update-geo.sh
 echo "Initializing DNS resource lists via update-geo.sh..."
