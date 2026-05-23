@@ -100,6 +100,7 @@ After installation, a lightweight daemon `mosdns-panel.service` is spawned autom
   * **Real-time Dashboard**: Dynamic Canvas charts mapping 24H queries alongside Prometheus cache size & high-precision hit rate scraping.
   * **Structured Query Audit**: Live stream query logs (Client IP, Domain, QType, Cache/Upstream status, Duration) persistent to SQLite.
   * **Configuration Editor**: Safely modify and syntax check your `config-v5.yaml` and blocklists directly in the browser. Domain lists are organized into **"Local/Direct"** and **"Remote/Proxy"** tabs, marked with read-only (🔒) and custom (✏️) tags, allowing one-click custom list creation pre-populated with format guidelines and example templates.
+  * **Fine-Grained Game Rules Switches**: Game domains are compiled from the official V2Fly `domain-list-community` raw archive into 12 distinct lists (e.g., Steam, Nintendo, PlayStation, Epic Games, Blizzard, EA, Riot, Roblox, Tencent, Mihoyo, Bilibili, and other miscellaneous games). Each list features an independent, iOS-style **"Enable/Disable"** switch to comment/uncomment them in `config-v5.yaml` for flexible direct/proxy routing.
   * **Live Console**: Real-time Systemd logs stream and one-click execution of updates.
 
 ### Self-Healing Binary Update

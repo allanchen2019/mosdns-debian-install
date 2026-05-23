@@ -23,6 +23,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
   * **实时仪表盘**：动态绘制 24 小时 DNS 解析波动图和内置的 Prometheus 高精内存缓存命中率、缓存容量状态。
   * **解析日志审计**：流式推送实时解析详情（源 IP、查询域名、QType、缓存/上游命中状态、解析耗时）并持久化写入 SQLite。
   * **在线编辑器**：可视化修改并校验 `config-v5.yaml`。支持将过滤域名集按 **“直连本地”** 和 **“代理远程”** 两大 Tab 切换管理，区分自动更新的只读列表（🔒）与自定义可编辑列表（✏️），并支持一键新建自定义列表、自动生成规则格式指导与示例模版。
+  * **游戏分流独立开关**：重构了游戏域名的拉取机制，支持从官方 V2Fly 官方源解压 ZIP 并递归编译出 12 个细粒度的游戏规则列表（如 Steam, Nintendo, PlayStation, Epic Games, Blizzard, EA, Riot, Roblox, Tencent, Mihoyo, Bilibili 及 Other 兜底等），并且每个列表都配备了独立的 **“启用/停用”** 开关，实现超精细的游戏直连与代理控制。
   * **实时终端控制台**：系统日志滚屏回显与一键脚本运行。
 
 ### 自动守护更新 (Systemd Timer 机制):

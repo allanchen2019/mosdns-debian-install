@@ -25,8 +25,9 @@ import (
 var webAssets embed.FS
 
 var (
-	startTime = time.Now()
-	mosdnsBin = "/opt/mosdns/bin/mosdns"
+	startTime    = time.Now()
+	mosdnsBin    = "/opt/mosdns/bin/mosdns"
+	panelVersion = "v5.1.0"
 )
 
 func main() {
@@ -147,6 +148,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	metrics := ScrapeMosdnsMetrics()
 
 	response := map[string]interface{}{
+		"version":               panelVersion,
 		"panel_uptime_seconds":  time.Since(startTime) / time.Second,
 		"service_active":        isActive,
 		"service_log":           serviceStatus,

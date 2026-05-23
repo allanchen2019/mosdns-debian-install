@@ -124,6 +124,12 @@ function syncStatus() {
         .then(data => {
             updatePingIndicator(true, data.service_active);
             
+            // Version display
+            if (data.version) {
+                const versionLabel = document.getElementById('panel-version-label');
+                if (versionLabel) versionLabel.textContent = data.version;
+            }
+            
             // Uptime format
             const uptime = data.panel_uptime_seconds || 0;
             document.getElementById('dash-uptime').textContent = formatSeconds(uptime);
