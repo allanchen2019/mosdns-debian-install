@@ -43,6 +43,10 @@ esac
 
 # 3. Prepare Directories (Idempotent)
 mkdir -p "${MOSDNS_BIN_DIR}"
+mkdir -p "/var/log/mosdns"
+touch "/var/log/mosdns/mosdns.log"
+chmod 755 "/var/log/mosdns"
+chmod 644 "/var/log/mosdns/mosdns.log"
 
 # 4. Clean up previous MosDNS systemd services if exist
 echo "Checking for previous MosDNS service registrations..."
