@@ -109,33 +109,41 @@ done
 chmod 644 "${MOSDNS_BIN_DIR}"/*.txt
 
 # 7. Restart service and verify runtime status
-echo "Restarting mosdns service..."
-if systemctl restart mosdns.service; then
-    sleep 2
-    if systemctl is-active --quiet mosdns.service; then
-        echo "=========================================="
-        echo "MosDNS resource files updated successfully!"
-        echo "=========================================="
-        # Clean up backups on success
-        rm -rf "${BACKUP_DIR}"
-        exit 0
+if [ -f "/etc/systemd/system/mosdns.service" ] || systemctl list-unit-files mosdns.service >/dev/null 2>&1; then
+    echo "Restarting mosdns service..."
+    if systemctl restart mosdns.service; then
+        sleep 2
+        if systemctl is-active --quiet mosdns.service; then
+            echo "=========================================="
+            echo "MosDNS resource files updated successfully!"
+            echo "=========================================="
+            # Clean up backups on success
+            rm -rf "${BACKUP_DIR}"
+            exit 0
+        fi
     fi
+
+    # 8. Rollback if service fails to start
+    echo "==========================================" >&2
+    echo "WARNING: MosDNS failed to start with new files! Rolling back..." >&2
+    echo "==========================================" >&2
+
+    for file in "${FILES[@]}"; do
+        if [ -f "${BACKUP_DIR}/${file}" ]; then
+            cp "${BACKUP_DIR}/${file}" "${MOSDNS_BIN_DIR}/${file}"
+        else
+            rm -f "${MOSDNS_BIN_DIR}/${file}"
+        fi
+    done
+
+    systemctl restart mosdns.service || true
+    echo "Rollback completed. MosDNS restored to previous working state." >&2
+    rm -rf "${BACKUP_DIR}"
+    exit 1
+else
+    echo "=========================================="
+    echo "MosDNS resource files deployed successfully (service not yet registered)."
+    echo "=========================================="
+    rm -rf "${BACKUP_DIR}"
+    exit 0
 fi
-
-# 8. Rollback if service fails to start
-echo "==========================================" >&2
-echo "WARNING: MosDNS failed to start with new files! Rolling back..." >&2
-echo "==========================================" >&2
-
-for file in "${FILES[@]}"; do
-    if [ -f "${BACKUP_DIR}/${file}" ]; then
-        cp "${BACKUP_DIR}/${file}" "${MOSDNS_BIN_DIR}/${file}"
-    else
-        rm -f "${MOSDNS_BIN_DIR}/${file}"
-    fi
-done
-
-systemctl restart mosdns.service
-echo "Rollback completed. MosDNS restored to previous working state." >&2
-rm -rf "${BACKUP_DIR}"
-exit 1
