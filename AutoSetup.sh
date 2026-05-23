@@ -24,6 +24,29 @@ bootstrap_repo() {
         apt-get update -y > /dev/null 2>&1 || true
         apt-get install -y wget unzip git golang-go gcc > /dev/null 2>&1
 
+        local backup_conf=false
+        local backup_local_domain=false
+        local backup_db=false
+        
+        if [ -f "${MOSDNS_DIR}/config-v5.yaml" ]; then
+            cp "${MOSDNS_DIR}/config-v5.yaml" /tmp/config-v5.yaml.tmp
+            backup_conf=true
+        fi
+        if [ -f "${MOSDNS_DIR}/bin/local-domain.txt" ]; then
+            cp "${MOSDNS_DIR}/bin/local-domain.txt" /tmp/local-domain.txt.tmp
+            backup_local_domain=true
+        fi
+        if [ -f "${MOSDNS_DIR}/bin/panel.db" ]; then
+            cp "${MOSDNS_DIR}/bin/panel.db" /tmp/panel.db.tmp
+            backup_db=true
+        fi
+        if [ -f "${MOSDNS_DIR}/bin/panel.db-wal" ]; then
+            cp "${MOSDNS_DIR}/bin/panel.db-wal" /tmp/panel.db-wal.tmp
+        fi
+        if [ -f "${MOSDNS_DIR}/bin/panel.db-shm" ]; then
+            cp "${MOSDNS_DIR}/bin/panel.db-shm" /tmp/panel.db-shm.tmp
+        fi
+
         if [ -d "${MOSDNS_DIR}" ]; then
             echo "Found existing directory at ${MOSDNS_DIR}."
             if [ -d "${MOSDNS_DIR}/.git" ]; then
@@ -41,6 +64,30 @@ bootstrap_repo() {
             git clone -b main https://github.com/allanchen2019/mosdns-debian-install.git "${MOSDNS_DIR}"
         fi
         
+        # Restore configuration and DB backups
+        if [ "${backup_conf}" = true ]; then
+            cp -f /tmp/config-v5.yaml.tmp "${MOSDNS_DIR}/config-v5.yaml"
+            rm -f /tmp/config-v5.yaml.tmp
+        fi
+        if [ "${backup_local_domain}" = true ]; then
+            mkdir -p "${MOSDNS_DIR}/bin"
+            cp -f /tmp/local-domain.txt.tmp "${MOSDNS_DIR}/bin/local-domain.txt"
+            rm -f /tmp/local-domain.txt.tmp
+        fi
+        if [ "${backup_db}" = true ]; then
+            mkdir -p "${MOSDNS_DIR}/bin"
+            cp -f /tmp/panel.db.tmp "${MOSDNS_DIR}/bin/panel.db"
+            rm -f /tmp/panel.db.tmp
+            if [ -f /tmp/panel.db-wal.tmp ]; then
+                cp -f /tmp/panel.db-wal.tmp "${MOSDNS_DIR}/bin/panel.db-wal"
+                rm -f /tmp/panel.db-wal.tmp
+            fi
+            if [ -f /tmp/panel.db-shm.tmp ]; then
+                cp -f /tmp/panel.db-shm.tmp "${MOSDNS_DIR}/bin/panel.db-shm"
+                rm -f /tmp/panel.db-shm.tmp
+            fi
+        fi
+
         chmod 755 -R "${MOSDNS_DIR}"
         echo "Repository bootstrapped successfully. Executing menu from ${MOSDNS_DIR}..."
         exec bash "${MOSDNS_DIR}/AutoSetup.sh" "$@"
@@ -73,13 +120,63 @@ while true; do
 
     case "${choice}" in
         1)
-            echo "正在启动 MosDNS 一键安装器..."
-            if bash "${MOSDNS_DIR}/install-mosdns.sh"; then
-                echo "=========================================="
-                echo "安装完成！Web 面板服务与 DNS 服务已激活。"
-                echo "=========================================="
+            # Detect current environment
+            if [ ! -f "${MOSDNS_DIR}/bin/mosdns" ]; then
+                echo "检测到系统未安装 MosDNS，正在执行全新安装..."
+                if bash "${MOSDNS_DIR}/install-mosdns.sh"; then
+                    echo "=========================================="
+                    echo "安装完成！Web 面板服务与 DNS 服务已激活。"
+                    echo "=========================================="
+                else
+                    echo "错误：安装脚本返回非零状态。" >&2
+                fi
             else
-                echo "错误：安装脚本返回非零状态。" >&2
+                echo "检测到系统中已安装 MosDNS。"
+                echo "--------------------------------------------------"
+                echo "  [1] 升级/更新（保留配置与数据，更新二进制及面板）[默认]"
+                echo "  [2] 覆盖重装（重新运行安装程序，默认保留配置）"
+                echo "  [3] 返回主菜单"
+                echo "--------------------------------------------------"
+                read -p "请选择操作 [1-3, 默认 1]: " sub_choice
+                sub_choice=${sub_choice:-1}
+                
+                case "${sub_choice}" in
+                    1)
+                        echo "正在执行无损升级/更新..."
+                        if bash "${MOSDNS_DIR}/update-all.sh"; then
+                            echo "=========================================="
+                            echo "更新完成！二进制主程序及控制面板已成功更新。"
+                            echo "=========================================="
+                        else
+                            echo "错误：更新脚本返回非零状态。" >&2
+                        fi
+                        ;;
+                    2)
+                        echo "正在准备覆盖重装..."
+                        read -p "是否将配置文件 config-v5.yaml 恢复为默认设置？(y/N, 默认: N): " reset_conf
+                        reset_conf=${reset_conf:-n}
+                        if [ "${reset_conf}" = "y" ] || [ "${reset_conf}" = "Y" ]; then
+                            echo "正在恢复默认配置文件..."
+                            if [ -f "${MOSDNS_DIR}/config-v5.yaml" ]; then
+                                cp "${MOSDNS_DIR}/config-v5.yaml" "${MOSDNS_DIR}/config-v5.yaml.bak_$(date +%s)"
+                            fi
+                            git checkout HEAD -- "${MOSDNS_DIR}/config-v5.yaml" || true
+                        else
+                            echo "保留当前配置文件 config-v5.yaml。"
+                        fi
+                        
+                        if bash "${MOSDNS_DIR}/install-mosdns.sh"; then
+                            echo "=========================================="
+                            echo "重装完成！服务已重新激活。"
+                            echo "=========================================="
+                        else
+                            echo "错误：重装脚本返回非零状态。" >&2
+                        fi
+                        ;;
+                    *)
+                        echo "已取消操作。"
+                        ;;
+                esac
             fi
             ;;
         2)
