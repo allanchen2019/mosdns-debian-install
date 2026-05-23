@@ -1,5 +1,16 @@
 # Logs and Databases
 bin/cache.dump
+bin/*.db
+bin/*.db-wal
+bin/*.db-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Compiled Binaries
+bin/mosdns-panel
+panel/mosdns-panel
+panel/panel
 
 # OS temporary files
 .DS_Store
