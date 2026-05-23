@@ -157,6 +157,8 @@ if systemctl restart mosdns.service; then
         echo "Building and deploying MosDNS Web Control Panel..."
         if [ -d "${MOSDNS_DIR}/panel" ]; then
             cd "${MOSDNS_DIR}/panel"
+            # Ensure dependencies are tidy and downloaded before compilation
+            go mod tidy > /dev/null 2>&1 || true
             if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
                 echo "MosDNS Web Control Panel compiled successfully."
                 
