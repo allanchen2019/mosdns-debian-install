@@ -48,6 +48,27 @@ touch "/var/log/mosdns/mosdns.log"
 chmod 755 "/var/log/mosdns"
 chmod 644 "/var/log/mosdns/mosdns.log"
 
+# Check if database already exists and optionally prompt to clear it
+if [ -f "${MOSDNS_BIN_DIR}/panel.db" ]; then
+    echo "Detected existing query logs and statistics database."
+    DELETE_EXISTING_STATS="n"
+    if [ -t 0 ]; then
+        read -p "是否清除已有的解析日志与统计数据库？(y/N, 默认: N): " input_val
+        if [ "${input_val}" = "y" ] || [ "${input_val}" = "Y" ]; then
+            DELETE_EXISTING_STATS="y"
+        fi
+    fi
+    if [ "${DELETE_EXISTING_STATS}" = "y" ]; then
+        echo "Clearing existing statistics database..."
+        rm -f "${MOSDNS_BIN_DIR}/panel.db"*
+        rm -f "/var/log/mosdns/mosdns.log"
+        touch "/var/log/mosdns/mosdns.log"
+        chmod 644 "/var/log/mosdns/mosdns.log"
+    else
+        echo "Preserving existing statistics database."
+    fi
+fi
+
 # 4. Clean up previous MosDNS systemd services if exist
 echo "Checking for previous MosDNS service registrations..."
 if systemctl is-active --quiet mosdns.service || systemctl is-enabled --quiet mosdns.service 2>/dev/null; then
