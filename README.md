@@ -85,12 +85,13 @@ This project delivers a highly-optimized, low-latency, anti-pollution, and self-
 
 ## 🛠️ Usage & Commands
 
-### 1-Click Installation (amd64 & arm64)
+### 1-Click Interactive Console Menu (Supports Installation, Updates & Uninstallation)
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
 > [!TIP]
-> For ultra-low RAM devices (< 256MB), the installer automatically downloads pre-compiled binaries from GitHub Releases to prevent OOM errors, with a fallback to local Go compilation (`go build`) as backup.
+> Running this command directly launches the **MosDNS Terminal Interactive Menu**, enabling 1-click installation, Geo rule updates, binary hot-upgrades, and uninstallation.
+> For ultra-low RAM devices (< 256MB), the installer option automatically downloads pre-compiled binaries from GitHub Releases to prevent OOM errors, with a fallback to local Go compilation (`go build`) as backup.
 
 ### 🖥️ Premium Glassmorphic Web Control Panel
 After installation, a lightweight daemon `mosdns-panel.service` is spawned automatically:
