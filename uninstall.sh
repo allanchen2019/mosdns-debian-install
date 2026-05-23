@@ -66,14 +66,33 @@ echo "DNS resolution has been successfully restored."
 # 5. Clean up MosDNS program directory (Executed as the absolute final step to prevent self-destruction failure)
 echo "Cleaning up MosDNS deployment files..."
 MOSDNS_DIR="/opt/mosdns"
-if [ -d "${MOSDNS_DIR}" ]; then
-    # We clean up files asynchronously or as the final command to ensure script exit doesn't crash on deletion
-    find "${MOSDNS_DIR}" -mindepth 1 ! -name "uninstall.sh" -delete || true
+
+DELETE_STATS="n"
+if [ -t 0 ]; then
+    read -p "是否清除所有解析日志与历史统计数据库？(y/N, 默认: N): " input_val
+    if [ "${input_val}" = "y" ] || [ "${input_val}" = "Y" ]; then
+        DELETE_STATS="y"
+    fi
 fi
 
-echo "=========================================="
-echo "MosDNS uninstallation completed successfully!"
-echo "=========================================="
-
-# Final command: clean up the directory and the script itself safely
-rm -rf "${MOSDNS_DIR}" > /dev/null 2>&1 || true
+if [ "${DELETE_STATS}" = "y" ]; then
+    echo "Clearing stats database and log files..."
+    rm -f "/var/log/mosdns/mosdns.log"
+    if [ -d "${MOSDNS_DIR}" ]; then
+        find "${MOSDNS_DIR}" -mindepth 1 ! -name "uninstall.sh" -delete || true
+    fi
+    echo "=========================================="
+    echo "MosDNS uninstallation completed successfully!"
+    echo "=========================================="
+    rm -rf "${MOSDNS_DIR}" > /dev/null 2>&1 || true
+else
+    echo "Preserving stats database and log files."
+    if [ -d "${MOSDNS_DIR}" ]; then
+        # Keep bin/ directory and panel.db* files, delete all other files and subdirectories
+        find "${MOSDNS_DIR}" -mindepth 1 ! -path "${MOSDNS_DIR}/bin" ! -path "${MOSDNS_DIR}/bin/panel.db*" ! -name "uninstall.sh" -delete || true
+    fi
+    echo "=========================================="
+    echo "MosDNS uninstallation completed successfully!"
+    echo "=========================================="
+    rm -f "${MOSDNS_DIR}/uninstall.sh" > /dev/null 2>&1 || true
+fi
