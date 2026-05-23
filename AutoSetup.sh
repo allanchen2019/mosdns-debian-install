@@ -25,17 +25,30 @@ bootstrap_repo() {
         apt-get install -y wget unzip git golang-go gcc > /dev/null 2>&1
 
         local backup_conf=false
-        local backup_local_domain=false
+        local backup_rules=false
         local backup_db=false
         
         if [ -f "${MOSDNS_DIR}/config-v5.yaml" ]; then
             cp "${MOSDNS_DIR}/config-v5.yaml" /tmp/config-v5.yaml.tmp
             backup_conf=true
         fi
-        if [ -f "${MOSDNS_DIR}/bin/local-domain.txt" ]; then
-            cp "${MOSDNS_DIR}/bin/local-domain.txt" /tmp/local-domain.txt.tmp
-            backup_local_domain=true
+        
+        # Back up all user-defined rules lists (*.txt files in bin/ except online downloaded ones)
+        if [ -d "${MOSDNS_DIR}/bin" ]; then
+            rm -rf /tmp/mosdns_user_rules
+            mkdir -p /tmp/mosdns_user_rules
+            for f in "${MOSDNS_DIR}/bin"/*.txt; do
+                [ -e "$f" ] || continue
+                local fname=$(basename "$f")
+                if [ "$fname" != "china-list.txt" ] && [ "$fname" != "apple-cn.txt" ] && \
+                   [ "$fname" != "proxy-list.txt" ] && [ "$fname" != "cn_ipv4.txt" ] && \
+                   [ "$fname" != "cn_ipv6.txt" ]; then
+                    cp "$f" /tmp/mosdns_user_rules/
+                    backup_rules=true
+                fi
+            done
         fi
+        
         if [ -f "${MOSDNS_DIR}/bin/panel.db" ]; then
             cp "${MOSDNS_DIR}/bin/panel.db" /tmp/panel.db.tmp
             backup_db=true
@@ -64,15 +77,15 @@ bootstrap_repo() {
             git clone -b main https://github.com/allanchen2019/mosdns-debian-install.git "${MOSDNS_DIR}"
         fi
         
-        # Restore configuration and DB backups
+        # Restore configuration, custom rules, and DB backups
         if [ "${backup_conf}" = true ]; then
             cp -f /tmp/config-v5.yaml.tmp "${MOSDNS_DIR}/config-v5.yaml"
             rm -f /tmp/config-v5.yaml.tmp
         fi
-        if [ "${backup_local_domain}" = true ]; then
+        if [ "${backup_rules}" = true ]; then
             mkdir -p "${MOSDNS_DIR}/bin"
-            cp -f /tmp/local-domain.txt.tmp "${MOSDNS_DIR}/bin/local-domain.txt"
-            rm -f /tmp/local-domain.txt.tmp
+            cp -f /tmp/mosdns_user_rules/* "${MOSDNS_DIR}/bin/"
+            rm -rf /tmp/mosdns_user_rules
         fi
         if [ "${backup_db}" = true ]; then
             mkdir -p "${MOSDNS_DIR}/bin"
@@ -163,6 +176,29 @@ while true; do
                             git checkout HEAD -- "${MOSDNS_DIR}/config-v5.yaml" || true
                         else
                             echo "保留当前配置文件 config-v5.yaml。"
+                        fi
+                        
+                        read -p "是否清除所有用户自定义的规则列表(如 local-domain.txt 等)？(y/N, 默认: N): " reset_rules
+                        reset_rules=${reset_rules:-n}
+                        if [ "${reset_rules}" = "y" ] || [ "${reset_rules}" = "Y" ]; then
+                            echo "正在清除自定义规则列表..."
+                            if [ -f "${MOSDNS_DIR}/bin/local-domain.txt" ]; then
+                                cp "${MOSDNS_DIR}/bin/local-domain.txt" "${MOSDNS_DIR}/bin/local-domain.txt.bak_$(date +%s)"
+                            fi
+                            git checkout HEAD -- "${MOSDNS_DIR}/bin/local-domain.txt" || true
+                            
+                            # Remove other custom *.txt lists
+                            for f in "${MOSDNS_DIR}/bin"/*.txt; do
+                                [ -e "$f" ] || continue
+                                local fname=$(basename "$f")
+                                if [ "$fname" != "china-list.txt" ] && [ "$fname" != "apple-cn.txt" ] && \
+                                   [ "$fname" != "proxy-list.txt" ] && [ "$fname" != "cn_ipv4.txt" ] && \
+                                   [ "$fname" != "cn_ipv6.txt" ] && [ "$fname" != "local-domain.txt" ]; then
+                                    rm -f "$f"
+                                fi
+                            done
+                        else
+                            echo "保留所有用户自定义的规则列表。"
                         fi
                         
                         if bash "${MOSDNS_DIR}/install-mosdns.sh"; then
