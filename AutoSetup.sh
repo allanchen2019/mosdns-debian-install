@@ -190,7 +190,7 @@ while true; do
                             # Remove other custom *.txt lists
                             for f in "${MOSDNS_DIR}/bin"/*.txt; do
                                 [ -e "$f" ] || continue
-                                local fname=$(basename "$f")
+                                fname=$(basename "$f")
                                 if [ "$fname" != "china-list.txt" ] && [ "$fname" != "apple-cn.txt" ] && \
                                    [ "$fname" != "proxy-list.txt" ] && [ "$fname" != "cn_ipv4.txt" ] && \
                                    [ "$fname" != "cn_ipv6.txt" ] && [ "$fname" != "local-domain.txt" ]; then
