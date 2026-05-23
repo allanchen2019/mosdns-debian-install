@@ -99,7 +99,7 @@ After installation, a lightweight daemon `mosdns-panel.service` is spawned autom
 * **Key Capabilities**:
   * **Real-time Dashboard**: Dynamic Canvas charts mapping 24H queries alongside Prometheus cache size & high-precision hit rate scraping.
   * **Structured Query Audit**: Live stream query logs (Client IP, Domain, QType, Cache/Upstream status, Duration) persistent to SQLite.
-  * **Configuration Editor**: Safely modify and syntax check your `config-v5.yaml` and blocklists directly in the browser.
+  * **Configuration Editor**: Safely modify and syntax check your `config-v5.yaml` and blocklists directly in the browser. Domain lists are organized into **"Local/Direct"** and **"Remote/Proxy"** tabs, marked with read-only (🔒) and custom (✏️) tags, allowing one-click custom list creation pre-populated with format guidelines and example templates.
   * **Live Console**: Real-time Systemd logs stream and one-click execution of updates.
 
 ### Self-Healing Binary Update
