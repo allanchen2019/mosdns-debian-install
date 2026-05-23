@@ -121,7 +121,7 @@ chmod 755 "${MOSDNS_BIN_DIR}/mosdns"
 
 # 6.5 Ensure default custom filter lists exist to prevent startup failure
 echo "Verifying presence of default custom domain filter lists..."
-for list_file in "direct-domain.txt" "geosite_category-games@cn.txt" "local-domain.txt"; do
+for list_file in "direct-domain.txt" "local-domain.txt"; do
     target_list_path="${MOSDNS_BIN_DIR}/${list_file}"
     if [ ! -f "${target_list_path}" ]; then
         echo "Creating default empty placeholder for custom list: ${list_file}"

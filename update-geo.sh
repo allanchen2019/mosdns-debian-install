@@ -27,6 +27,7 @@ echo "=========================================="
 URL_CHINA_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt"
 URL_APPLE_CN="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt"
 URL_PROXY_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt"
+URL_GAMES_CN="https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/category-games-cn"
 URL_GEOIP_CN="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt"
 
 # 2. Download files to temporary directory with retries and timeout
@@ -44,10 +45,15 @@ download_file() {
 if ! download_file "${URL_CHINA_LIST}" "${TEMP_DIR}/china-list.txt" || \
    ! download_file "${URL_APPLE_CN}" "${TEMP_DIR}/apple-cn.txt" || \
    ! download_file "${URL_PROXY_LIST}" "${TEMP_DIR}/proxy-list.txt" || \
+   ! download_file "${URL_GAMES_CN}" "${TEMP_DIR}/geosite_category-games@cn.txt.raw" || \
    ! download_file "${URL_GEOIP_CN}" "${TEMP_DIR}/cn.txt"; then
     echo "Fatal: Resource downloading failed. Aborting update." >&2
     exit 1
 fi
+
+# 2.5 Clean and format the games list to keep pure standard domain list formats
+echo "Processing China games list..."
+grep -E -v "^(#|include:)" "${TEMP_DIR}/geosite_category-games@cn.txt.raw" | grep -v "^$" | sed 's/ @.*//' > "${TEMP_DIR}/geosite_category-games@cn.txt" || true
 
 # 3. Process GeoIP list (split CN IP into IPv4 and IPv6)
 echo "Processing China IP list..."
@@ -81,6 +87,7 @@ echo "Validating downloaded resource files..."
 if ! validate_file "${TEMP_DIR}/china-list.txt" 10000 200000 || \
    ! validate_file "${TEMP_DIR}/apple-cn.txt" 100 2000 || \
    ! validate_file "${TEMP_DIR}/proxy-list.txt" 1000 20000 || \
+   ! validate_file "${TEMP_DIR}/geosite_category-games@cn.txt" 10 100 || \
    ! validate_file "${TEMP_DIR}/cn_ipv4.txt" 1000 20000 || \
    ! validate_file "${TEMP_DIR}/cn_ipv6.txt" 100 2000; then
     echo "Fatal: Resource validation failed. Aborting update." >&2
@@ -91,7 +98,7 @@ echo "All files validated successfully."
 
 # 5. Prepare backup of current files in isolated backup-geo directory
 mkdir -p "${BACKUP_DIR}"
-declare -a FILES=("china-list.txt" "apple-cn.txt" "proxy-list.txt" "cn_ipv4.txt" "cn_ipv6.txt")
+declare -a FILES=("china-list.txt" "apple-cn.txt" "proxy-list.txt" "geosite_category-games@cn.txt" "cn_ipv4.txt" "cn_ipv6.txt")
 
 for file in "${FILES[@]}"; do
     if [ -f "${MOSDNS_BIN_DIR}/${file}" ]; then

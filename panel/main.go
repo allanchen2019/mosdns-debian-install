@@ -305,9 +305,10 @@ func handleRulesList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	onlineRulesMap := map[string]bool{
-		"china-list.txt": true,
-		"proxy-list.txt": true,
-		"apple-cn.txt":   true,
+		"china-list.txt":                 true,
+		"proxy-list.txt":                 true,
+		"apple-cn.txt":                   true,
+		"geosite_category-games@cn.txt": true,
 	}
 
 	type RuleFileInfo struct {
@@ -372,9 +373,10 @@ func handleRuleFileContent(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		// Online rules read-only protection
 		onlineRules := map[string]bool{
-			"china-list.txt": true,
-			"proxy-list.txt": true,
-			"apple-cn.txt":   true,
+			"china-list.txt":                 true,
+			"proxy-list.txt":                 true,
+			"apple-cn.txt":                   true,
+			"geosite_category-games@cn.txt": true,
 		}
 		if onlineRules[filename] {
 			http.Error(w, "自动更新列表为只读，不允许在网页端修改。", http.StatusForbidden)
