@@ -26,6 +26,11 @@ var (
 	LogClientsMu  sync.Mutex
 	QueryClients  = make(map[chan QueryLog]bool)
 	QueryClientsMu sync.Mutex
+
+	// Cache stats offset management
+	cacheQueriesOffset int
+	cacheHitsOffset    int
+	cacheOffsetsMu     sync.Mutex
 )
 
 type RuleState struct {
@@ -445,9 +450,21 @@ func ScrapeMosdnsMetrics() MosdnsMetrics {
 		case "mosdns_cache_size_current":
 			m.CacheSize = int(val)
 		case "mosdns_cache_query_total":
-			m.CacheQueries = int(val)
+			rawVal := int(val)
+			cacheOffsetsMu.Lock()
+			if rawVal < cacheQueriesOffset {
+				cacheQueriesOffset = 0 // MosDNS restarted, reset offset
+			}
+			m.CacheQueries = rawVal - cacheQueriesOffset
+			cacheOffsetsMu.Unlock()
 		case "mosdns_cache_hit_total":
-			m.CacheHits = int(val)
+			rawVal := int(val)
+			cacheOffsetsMu.Lock()
+			if rawVal < cacheHitsOffset {
+				cacheHitsOffset = 0 // MosDNS restarted, reset offset
+			}
+			m.CacheHits = rawVal - cacheHitsOffset
+			cacheOffsetsMu.Unlock()
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -458,6 +475,52 @@ func ScrapeMosdnsMetrics() MosdnsMetrics {
 		m.CacheHitRate = (float64(m.CacheHits) / float64(m.CacheQueries)) * 100.0
 	}
 	return m
+}
+
+// ResetCacheMetricsOffsets scrapes the raw Prometheus values and registers them as offsets
+func ResetCacheMetricsOffsets() {
+	client := &http.Client{Timeout: 1 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:9080/metrics")
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	var rawQueries, rawHits int
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+		name := fields[0]
+		valStr := fields[1]
+		val, err := strconv.ParseFloat(valStr, 64)
+		if err != nil {
+			continue
+		}
+
+		cleanName := name
+		if idx := strings.Index(name, "{"); idx != -1 {
+			cleanName = name[:idx]
+		}
+
+		switch cleanName {
+		case "mosdns_cache_query_total":
+			rawQueries = int(val)
+		case "mosdns_cache_hit_total":
+			rawHits = int(val)
+		}
+	}
+
+	cacheOffsetsMu.Lock()
+	cacheQueriesOffset = rawQueries
+	cacheHitsOffset = rawHits
+	cacheOffsetsMu.Unlock()
 }
 
 // ReadDomainSets parses config-v5.yaml to find files under direct_domain, local_domain, and remote_domain

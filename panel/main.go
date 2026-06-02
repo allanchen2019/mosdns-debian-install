@@ -964,8 +964,16 @@ func handleCacheFlush(w http.ResponseWriter, r *http.Request) {
 	os.Remove("/opt/mosdns/bin/cache.dump")
 	os.Remove("/opt/mosdns/cache.dump")
 
+	// 3. Clear database query logs to reset rolling 24H dashboard statistics
+	if err := ClearQueryLogs(); err != nil {
+		log.Printf("Warning: Failed to clear query logs database: %v", err)
+	}
+
+	// 4. Reset Prometheus cache hit/query offsets to zero out panel statistics
+	ResetCacheMetricsOffsets()
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Cache flushed successfully (memory and persistence cleared)",
+		"message": "Cache flushed and statistics reset successfully",
 	})
 }

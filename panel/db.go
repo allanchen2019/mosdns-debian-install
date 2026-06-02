@@ -264,3 +264,17 @@ func GetStatsSummary() (StatsSummary, error) {
 
 	return summary, nil
 }
+
+// ClearQueryLogs truncates the query_logs table to reset dashboard statistics.
+func ClearQueryLogs() error {
+	if DB == nil {
+		return fmt.Errorf("database is not initialized")
+	}
+	_, err := DB.Exec("DELETE FROM query_logs")
+	if err != nil {
+		return fmt.Errorf("failed to clear query logs: %w", err)
+	}
+	// Run vacuum to reclaim space
+	_, _ = DB.Exec("VACUUM")
+	return nil
+}

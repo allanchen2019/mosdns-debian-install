@@ -475,6 +475,7 @@ function setupServiceActions() {
             .then(data => {
                 alert(data.message || '缓存清空成功！');
                 syncStatus(); // Refresh cache size metric
+                syncStats();  // Refresh dashboard graphs and counters
             })
             .catch(err => {
                 alert('清空缓存失败，请检查 MosDNS API 服务状态: ' + err.message);
