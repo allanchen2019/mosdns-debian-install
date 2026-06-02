@@ -153,14 +153,17 @@ plugins:
 - tag: "main_sequence"
   type: sequence
   args:
+  - matches: "qtype 12"
+    exec: goto local_router_sequence
+
+  - matches: "qname $local_domain"
+    exec: goto local_router_sequence
+
   - exec: $mem_cache
   - matches: has_resp
     exec: query_summary [cache_hit]
   - matches: has_resp
     exec: accept
-
-  - matches: "qname $local_domain"
-    exec: goto local_router_sequence
 
   - matches: "qname $direct_domain"
     exec: goto local_sequence
