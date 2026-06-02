@@ -201,6 +201,7 @@ func handleServiceAction(w http.ResponseWriter, r *http.Request) {
 // handleConfig reads or writes the MosDNS main config file with pre-check validation and rollbacks
 func handleConfig(w http.ResponseWriter, r *http.Request) {
 	configPath := "/opt/mosdns/config-v5.yaml"
+	ruleBaseDir := filepath.Dir(mosdnsBin) // /opt/mosdns/bin
 
 	if r.Method == http.MethodGet {
 		data, err := os.ReadFile(configPath)
@@ -221,7 +222,21 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// --- HIGH AVAILABILITY PROCESS ---
-		// 1. Write to temporary config file
+
+		// STEP 1: Pre-flight check — verify all referenced rule files exist
+		missingFiles := CheckReferencedFilesExist(body, ruleBaseDir)
+		if len(missingFiles) > 0 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error":      "missing_files",
+				"error_desc": fmt.Sprintf("配置引用了 %d 个不存在的规则文件，请先在「系统运维」页面执行「更新地理规则包」生成这些文件。", len(missingFiles)),
+				"output":     fmt.Sprintf("缺失文件列表：%s", strings.Join(missingFiles, ", ")),
+			})
+			return
+		}
+
+		// STEP 2: Write to temporary config file for syntax validation
 		tempConfig := "/opt/mosdns/config-v5.temp.yaml"
 		if err := os.WriteFile(tempConfig, body, 0644); err != nil {
 			http.Error(w, "Failed to write temp config: "+err.Error(), 500)
@@ -229,42 +244,60 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 		}
 		defer os.Remove(tempConfig)
 
-		// 2. Validate configuration syntax (Dry-run check)
-		checkCmd := exec.Command(mosdnsBin, "check", "-c", tempConfig)
-		var checkOut bytesBufferWriter // Captures dry-run prints
+		// STEP 3: Validate configuration syntax (Dry-run via mosdns start with timeout)
+		valCtx, valCancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer valCancel()
+
+		checkCmd := exec.CommandContext(valCtx, mosdnsBin, "start", "-c", tempConfig, "-d", ruleBaseDir)
+		var checkOut bytesBufferWriter
 		checkCmd.Stdout = &checkOut
 		checkCmd.Stderr = &checkOut
 
 		if err := checkCmd.Run(); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{
-				"error":  "Configuration validation failed",
-				"output": checkOut.String(),
-			})
-			return
+			outputStr := checkOut.String()
+			isConfigError := true
+
+			// If the run timed out (context cancelled) or failed because port is occupied
+			// by the production service, the config itself was parsed successfully.
+			if valCtx.Err() == context.DeadlineExceeded {
+				isConfigError = false
+			} else if strings.Contains(outputStr, "address already in use") {
+				isConfigError = false
+			}
+
+			if isConfigError {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{
+					"error":      "validation_failed",
+					"error_desc": "配置文件语法校验失败，mosdns 无法解析该配置。请检查 YAML 格式及插件配置。",
+					"output":     outputStr,
+				})
+				return
+			}
 		}
 
-		// 3. Syntax test passed! Create timestamped backup of the production config
+		// STEP 4: Record pre-restart service state (for safety)
+		wasActive := isServiceActive()
+
+		// STEP 5: Create timestamped backup of the production config
 		timestamp := time.Now().Format("20060102_150405")
 		backupPath := fmt.Sprintf("%s.%s.bak", configPath, timestamp)
 		if originalData, err := os.ReadFile(configPath); err == nil {
 			os.WriteFile(backupPath, originalData, 0644)
 		}
 
-		// 4. Atomic deploy (overwrite production file)
+		// STEP 6: Atomic deploy (overwrite production file)
 		if err := os.WriteFile(configPath, body, 0644); err != nil {
 			http.Error(w, "Failed to deploy configuration: "+err.Error(), 500)
 			return
 		}
 
-		// 5. Restart service and execute Canary uptime health checks
+		// STEP 7: Restart service and execute Canary uptime health checks
 		_, restartErr := ManageService("restart")
 		if restartErr == nil {
-			// Wait and perform resolving checks on localhost:53
 			time.Sleep(2 * time.Second)
 			if canaryCheckPassed() {
-				// Success! Clear check temp config
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(map[string]string{
 					"message": "Configuration updated successfully and service verified stable",
@@ -274,24 +307,46 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// --- CANARY HEALTH CHECK FAILED -> CRITICAL SELF-HEALING ROLLBACK ---
-		log.Println("CANARY HEALTH CHECK FAILED! Triggering configuration rollback self-healing...")
+		log.Printf("CANARY HEALTH CHECK FAILED! (wasActive=%v, restartErr=%v) Triggering rollback...", wasActive, restartErr)
+
 		// Recover backup
 		if backupData, err := os.ReadFile(backupPath); err == nil {
 			os.WriteFile(configPath, backupData, 0644)
 		}
-		// Restart to previous stable state
-		ManageService("restart")
 
-		w.WriteHeader(http.StatusInternalServerError)
+		// Only attempt restart if service was previously active
+		rollbackMsg := "Rollback completed."
+		if wasActive {
+			if _, rbErr := ManageService("restart"); rbErr != nil {
+				log.Printf("CRITICAL: Rollback restart also failed: %v", rbErr)
+				rollbackMsg = "Rollback config restored but service restart failed. Manual intervention may be needed."
+			} else {
+				time.Sleep(2 * time.Second)
+				if canaryCheckPassed() {
+					rollbackMsg = "Rollback successful, DNS service restored to previous stable configuration."
+				} else {
+					rollbackMsg = "Rollback config restored but DNS canary still failing. Check service logs."
+				}
+			}
+		}
+
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error":  "Canary health verification failed. Service failed to resolve DNS. Restored automatically to previous stable configuration.",
-			"output": "Service crash logs triggered rollback.",
+			"error":      "canary_failed",
+			"error_desc": "金丝雀健康检查失败：DNS 无法正常解析。已自动回滚至上一个稳定配置。",
+			"output":     rollbackMsg,
 		})
 		return
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+// isServiceActive checks if mosdns.service is currently running
+func isServiceActive() bool {
+	status, _ := ManageService("status")
+	return strings.Contains(status, "active (running)")
 }
 
 // handleRulesList lists all white-listed rule filenames grouped by category

@@ -476,9 +476,23 @@ function loadConfig() {
         });
 }
 
+function enableTabIndentation(textarea) {
+    if (!textarea) return;
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            textarea.value = textarea.value.substring(0, start) + "  " + textarea.value.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + 2;
+        }
+    });
+}
+
 function setupConfigEditor() {
     const saveBtn = document.getElementById('config-btn-save');
     const textarea = document.getElementById('config-textarea');
+    enableTabIndentation(textarea);
     const consoleContainer = document.getElementById('config-console-container');
     const consolePre = document.getElementById('config-console-pre');
     const collapseArrow = document.querySelector('.console-collapse-arrow');
@@ -523,20 +537,42 @@ function setupConfigEditor() {
                 consolePre.appendChild(line2);
                 alert('🎉 配置更新成功，且本地 DNS 金丝雀自测健康，服务已平滑热重载上线！');
             } else {
-                // Show errors in precheck console
+                // Categorized error display
+                const errorType = data.error || 'unknown';
+                const errorDesc = data.error_desc || data.error || '未知的应用报错';
+                const errorOutput = data.output || '';
+
+                let icon = '❌';
+                let alertMsg = '';
+                let lineClass = 'text-error';
+
+                if (errorType === 'missing_files') {
+                    icon = '📁';
+                    lineClass = 'text-warning';
+                    alertMsg = '⚠️ 配置引用了不存在的规则文件！请先在「系统运维」页面点击「更新地理规则包」生成缺失文件，然后再保存配置。';
+                } else if (errorType === 'validation_failed') {
+                    icon = '🔧';
+                    alertMsg = '❌ 配置语法校验失败！请检查 YAML 格式和插件配置。生产配置未被修改，DNS 服务不受影响。';
+                } else if (errorType === 'canary_failed') {
+                    icon = '🔄';
+                    alertMsg = '⚠️ 金丝雀健康检查失败！系统已自动回滚到上一个稳定配置，DNS 服务已恢复正常。';
+                } else {
+                    alertMsg = '❌ 配置保存失败！请查看控制台输出。';
+                }
+
                 const lineErr = document.createElement('div');
-                lineErr.className = 'terminal-line text-error';
-                lineErr.textContent = `>> [CRITICAL ERROR] ${data.error || '未知的应用报错'}`;
+                lineErr.className = `terminal-line ${lineClass}`;
+                lineErr.textContent = `>> [${icon} ERROR] ${errorDesc}`;
                 consolePre.appendChild(lineErr);
 
-                if (data.output) {
+                if (errorOutput) {
                     const lineOutput = document.createElement('div');
                     lineOutput.className = 'terminal-line text-dim';
-                    lineOutput.textContent = data.output;
+                    lineOutput.textContent = errorOutput;
                     consolePre.appendChild(lineOutput);
                 }
 
-                alert('❌ 校验或金丝雀测试失败！生产级配置已被保护不受侵害。请查看底部控制台预检错误输出。');
+                alert(alertMsg);
             }
         })
         .catch(err => {
@@ -717,6 +753,7 @@ function loadRuleFileContent(file) {
 function setupRulesManager() {
     const saveBtn = document.getElementById('rules-btn-save');
     const textarea = document.getElementById('rules-textarea');
+    enableTabIndentation(textarea);
 
     // 1. Sub-tab click listeners
     const localTabBtn = document.getElementById('rules-subtab-local');

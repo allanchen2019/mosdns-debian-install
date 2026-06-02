@@ -56,6 +56,7 @@ func ValidateFilename(filename string) (string, error) {
 }
 
 // ManageService executes standard systemctl commands safely using strict args
+// Uses a 30-second timeout to prevent systemctl from hanging indefinitely
 func ManageService(action string) (string, error) {
 	validActions := map[string]bool{"start": true, "stop": true, "restart": true, "status": true}
 	if !validActions[action] {
@@ -63,13 +64,68 @@ func ManageService(action string) (string, error) {
 	}
 
 	// Parameters are strictly bounded, preventing system execution sinks exploit
-	cmd := exec.Command("/bin/systemctl", action, "mosdns.service")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "/bin/systemctl", action, "mosdns.service")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 
 	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return out.String(), fmt.Errorf("systemctl %s timed out after 30 seconds", action)
+	}
 	return out.String(), err
+}
+
+// ExtractReferencedFiles parses YAML config content and returns all relative file paths
+// referenced in "files:" sections (e.g., ./china-list.txt)
+func ExtractReferencedFiles(configContent []byte) []string {
+	var files []string
+	seen := make(map[string]bool)
+	lines := strings.Split(string(configContent), "\n")
+	var inFiles bool
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// Detect entering a files: block
+		if trimmed == "files:" {
+			inFiles = true
+			continue
+		}
+
+		// Exit files block on non-list items (but ignore comments)
+		if inFiles && trimmed != "" && !strings.HasPrefix(trimmed, "-") && !strings.HasPrefix(trimmed, "#") {
+			inFiles = false
+			continue
+		}
+
+		if inFiles && strings.HasPrefix(trimmed, "-") {
+			// Extract filename from lines like: - "./china-list.txt"
+			fileVal := strings.Trim(strings.TrimPrefix(trimmed, "-"), ` "'`)
+			fileVal = strings.TrimPrefix(fileVal, "./")
+			if strings.HasSuffix(fileVal, ".txt") && !seen[fileVal] {
+				seen[fileVal] = true
+				files = append(files, fileVal)
+			}
+		}
+	}
+	return files
+}
+
+// CheckReferencedFilesExist validates that all referenced rule files exist on disk.
+// Returns a list of missing filenames.
+func CheckReferencedFilesExist(configContent []byte, baseDir string) []string {
+	var missing []string
+	for _, filename := range ExtractReferencedFiles(configContent) {
+		fullPath := filepath.Join(baseDir, filename)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			missing = append(missing, filename)
+		}
+	}
+	return missing
 }
 
 // RunMaintenanceScript executes geo rule update or program binary upgrade safely

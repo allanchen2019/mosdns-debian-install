@@ -1020,6 +1020,7 @@ tr:hover td {
 .text-info { color: var(--neon-blue); }
 .text-success { color: var(--neon-green); }
 .text-error { color: var(--neon-red); }
+.text-warning { color: #f59e0b; }
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
