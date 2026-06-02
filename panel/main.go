@@ -940,7 +940,7 @@ func handleCacheFlush(w http.ResponseWriter, r *http.Request) {
 
 	// 1. Flush in-memory cache
 	client := &http.Client{Timeout: 3 * time.Second}
-	resp, err := client.Get("http://127.0.0.1:9080/flush")
+	resp, err := client.Get("http://127.0.0.1:9080/plugins/mem_cache/flush")
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
