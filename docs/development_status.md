@@ -9,8 +9,8 @@
 *   **部署环境**：PVE LXC 容器 (`192.168.4.102`)
 *   **部署路径**：`/opt/mosdns/`
 *   **当前分支**：`main` (与远端 `origin/main` 完美对齐)
-*   **最新提交 (Commit)**：`4de849d5a55700749769156303b113cd81c13e4b`
-*   **当前版本 (Version)**：`v5.1.1`
+*   **最新提交 (Commit)**：`8929fc323db365f67158cb0071a0f42087aabe96`
+*   **当前版本 (Version)**：`v5.1.2`
 *   **文档备份**：相关设计、审计、调优文档已同步备份至 `/opt/mosdns/docs/` 目录。
     *   [dns_audit_report.md](file:///opt/mosdns/docs/dns_audit_report.md)
     *   [development_status.md](file:///opt/mosdns/docs/development_status.md)
