@@ -2,7 +2,7 @@ api:
   http: "127.0.0.1:9080"
 
 log:
-  level: info
+  level: debug
   file: "/var/log/mosdns/mosdns.log"
 
 plugins:
@@ -76,11 +76,14 @@ plugins:
   type: forward
   args:
     concurrent: 2
+
+
     upstreams:
-    - addr: "tls://8.8.8.8:853"
-      enable_pipeline: true
     - addr: "tls://1.1.1.1:853"
       enable_pipeline: true
+    - addr: "tls://8.8.8.8:853"
+      enable_pipeline: true
+
 
 # 5. 自愈兜底策略 (隐私优先：始终先尝试隧道，500ms 超时后回退国内 DNS)
 - tag: "remote_fallback_strategy"
