@@ -1124,3 +1124,39 @@ input:checked + .slider:before {
     text-decoration: line-through;
     text-decoration-color: rgba(255, 255, 255, 0.2);
 }
+
+/* Clear Cache Button Styling on Dashboard Card Header */
+.clear-cache-btn {
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: #22d3ee;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    margin-left: auto;
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.clear-cache-btn:hover {
+    background: rgba(6, 182, 212, 0.25);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+
+.clear-cache-btn:active {
+    transform: scale(0.95);
+}
+
+.clear-cache-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+}

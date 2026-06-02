@@ -86,6 +86,7 @@ func registerAPIs() {
 	http.HandleFunc("/api/rules/toggle", handleRulesToggle)
 	http.HandleFunc("/api/queries/history", handleQueryHistory)
 	http.HandleFunc("/api/stats/summary", handleStatsSummary)
+	http.HandleFunc("/api/cache/flush", handleCacheFlush)
 
 	// SSE Real-time feeds
 	http.HandleFunc("/api/logs/stream", handleLogStream)
@@ -927,5 +928,39 @@ func handleRulesToggle(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": msg,
+	})
+}
+
+// handleCacheFlush clears the cache in the local MosDNS instance via HTTP API
+func handleCacheFlush(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:9080/flush")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": fmt.Sprintf("Failed to flush mosdns cache: %v", err),
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": fmt.Sprintf("Mosdns API returned status code %d", resp.StatusCode),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Cache flushed successfully",
 	})
 }

@@ -456,6 +456,35 @@ function setupServiceActions() {
     document.getElementById('header-btn-restart').addEventListener('click', () => handleAction('restart'));
     document.getElementById('header-btn-start').addEventListener('click', () => handleAction('start'));
     document.getElementById('header-btn-stop').addEventListener('click', () => handleAction('stop'));
+
+    const clearCacheBtn = document.getElementById('dash-btn-clear-cache');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', () => {
+            if (!confirm('您确定要立即清空 MosDNS 的所有解析缓存吗？\n清空后，所有域名的解析记录将被重置，首次访问需要重新向上游发起解析请求。')) return;
+
+            clearCacheBtn.disabled = true;
+            clearCacheBtn.textContent = '🧹 清理中...';
+
+            fetch('/api/cache/flush', {
+                method: 'POST'
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('API Error');
+                return res.json();
+            })
+            .then(data => {
+                alert(data.message || '缓存清空成功！');
+                syncStatus(); // Refresh cache size metric
+            })
+            .catch(err => {
+                alert('清空缓存失败，请检查 MosDNS API 服务状态: ' + err.message);
+            })
+            .finally(() => {
+                clearCacheBtn.disabled = false;
+                clearCacheBtn.textContent = '🧹 清空';
+            });
+        });
+    }
 }
 
 /* ========================================================
