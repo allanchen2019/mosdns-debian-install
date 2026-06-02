@@ -12,3 +12,7 @@
 
 ## 4. No Absolute or Assured Claims
 - Avoid overly absolute, definite, or assured statements. Use neutral, objective, and cautious language (e.g., "typically", "generally", "reduces chance of", instead of "completely guarantees", "absolutely prevents").
+
+## 5. Build and Compilation Rules
+- Before compiling code, stop or kill any running instances of the target binaries to prevent file locking and "text file busy" errors.
+
