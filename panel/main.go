@@ -27,7 +27,7 @@ var webAssets embed.FS
 var (
 	startTime    = time.Now()
 	mosdnsBin    = "/opt/mosdns/bin/mosdns"
-	panelVersion = "v5.1.0"
+	panelVersion = "v5.1.1"
 )
 
 func main() {
