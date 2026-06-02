@@ -316,11 +316,20 @@ func parseAndSaveQuery(line string) {
 	case "[cache_hit]":
 		upstream = "Local Cache"
 	case "[router_hit]":
-		upstream = "192.168.4.1 (MikroTik)"
+		upstream = GetUpstreamsForTag("router_forward")
+		if upstream == "" {
+			upstream = "192.168.4.1"
+		}
 	case "[local_hit]", "[fallback_cn_hit]":
-		upstream = "China DNS (119.29.29.29/223.5.5.5)"
+		upstream = GetUpstreamsForTag("local_forward")
+		if upstream == "" {
+			upstream = "119.29.29.29, 223.5.5.5"
+		}
 	case "[remote_hit_resilient]", "[fallback_remote_final_resilient]", "[fallback_remote_trial]":
-		upstream = "Secure DoT (8.8.8.8:853)"
+		upstream = GetUpstreamsForTag("remote_forward")
+		if upstream == "" {
+			upstream = "1.1.1.1:853, 8.8.8.8:853"
+		}
 	default:
 		upstream = "Default Gateway"
 	}
@@ -655,4 +664,69 @@ func ToggleFileInDomainSet(tag string, filename string, enable bool) error {
 
 	// Write back
 	return os.WriteFile(configPath, []byte(strings.Join(newLines, "\n")), 0644)
+}
+
+// GetUpstreamsForTag parses the config-v5.yaml file to extract upstreams for a given forward plugin tag.
+// Returns a comma-separated list of upstream addresses.
+func GetUpstreamsForTag(tag string) string {
+	configPath := "/opt/mosdns/config-v5.yaml"
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return ""
+	}
+
+	lines := strings.Split(string(data), "\n")
+	var inTargetPlugin bool
+	var inUpstreams bool
+	var upstreams []string
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// New plugin detection
+		if strings.HasPrefix(trimmed, "- tag:") || strings.HasPrefix(trimmed, "- type:") {
+			plugTag := ""
+			if strings.HasPrefix(trimmed, "- tag:") {
+				plugTag = strings.Trim(strings.TrimPrefix(trimmed, "- tag:"), ` "'`)
+			}
+			if plugTag == tag {
+				inTargetPlugin = true
+				inUpstreams = false
+			} else {
+				inTargetPlugin = false
+				inUpstreams = false
+			}
+			continue
+		}
+
+		if inTargetPlugin {
+			if trimmed == "upstreams:" {
+				inUpstreams = true
+				continue
+			}
+
+			if inUpstreams && strings.Contains(trimmed, "addr:") {
+				// Extract address
+				parts := strings.SplitN(trimmed, "addr:", 2)
+				if len(parts) == 2 {
+					addr := strings.Trim(parts[1], ` "'`)
+					addr = strings.TrimPrefix(addr, "tls://")
+					addr = strings.TrimPrefix(addr, "https://")
+					addr = strings.TrimPrefix(addr, "quic://")
+					addr = strings.TrimPrefix(addr, "udp://")
+					if idx := strings.Index(addr, "/"); idx != -1 {
+						addr = addr[:idx]
+					}
+					if addr != "" {
+						upstreams = append(upstreams, addr)
+					}
+				}
+			}
+		}
+	}
+
+	if len(upstreams) > 0 {
+		return strings.Join(upstreams, ", ")
+	}
+	return ""
 }
