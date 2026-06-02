@@ -193,7 +193,7 @@ if systemctl restart mosdns.service; then
         DEPLOY_PANEL_SUCCESS=false
         
         # Try downloading pre-compiled binary first
-        PANEL_URL="https://github.com/allanchen2019/mosdns-debian-install/releases/download/latest/mosdns-panel-linux-${arch_suffix}"
+        PANEL_URL="https://github.com/allanchen2019/mosdns-debian-install/releases/latest/download/mosdns-panel-linux-${arch_suffix}"
         echo "Attempting to download pre-compiled control panel from: ${PANEL_URL}"
         if wget --timeout=10 --tries=2 -qO "${TEMP_DIR}/mosdns-panel" "${PANEL_URL}"; then
             chmod +x "${TEMP_DIR}/mosdns-panel"

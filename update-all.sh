@@ -78,7 +78,7 @@ else
 fi
 
 # 3. Update Web Control Panel Binary
-PANEL_URL="https://github.com/allanchen2019/mosdns-debian-install/releases/download/latest/mosdns-panel-linux-${arch_suffix}"
+PANEL_URL="https://github.com/allanchen2019/mosdns-debian-install/releases/latest/download/mosdns-panel-linux-${arch_suffix}"
 echo "Downloading latest MosDNS Web Control Panel from ${PANEL_URL}..."
 
 PANEL_UPDATED=false
