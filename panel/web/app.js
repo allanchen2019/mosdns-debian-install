@@ -68,11 +68,11 @@ function setupTabSwitching() {
     const descEl = document.getElementById('current-tab-desc');
 
     const tabMetadata = {
-        dashboard: { title: '控制主页', desc: '实时监控 MosDNS 解析数据与主控系统状态' },
-        config: { title: '核心配置编辑', desc: '可视化修改 config-v5.yaml (保存前将触发安全语法预检与 canary 回滚)' },
-        rules: { title: '域名分流规则列表', desc: '直接编辑 local-domain.txt, proxy-list.txt 等域名过滤器' },
-        queries: { title: '解析审计历史', desc: '实时多维度审计局域网 DNS 请求耗时与命中记录' },
-        maintenance: { title: '系统运维面板', desc: '在线升级 DNS 资源包与二进制主程序，查看控制台输出' }
+        dashboard: { title: '控制主页', desc: '监控 MosDNS 解析数据与系统状态' },
+        config: { title: '核心配置编辑', desc: '修改 config-v5.yaml 配置文件' },
+        rules: { title: '域名分流规则列表', desc: '管理域名过滤规则列表' },
+        queries: { title: '解析审计历史', desc: '查看域名解析请求历史' },
+        maintenance: { title: '系统运维面板', desc: '更新规则数据包与程序版本' }
     };
 
     navItems.forEach(btn => {
@@ -426,7 +426,7 @@ function renderVolumeChart(volumeData) {
    ======================================================= */
 function setupServiceActions() {
     const handleAction = (action) => {
-        if (!confirm(`您确定要 ${action === 'restart' ? '重启' : action === 'start' ? '启动' : '关闭'} 本地主 DNS 解析服务吗？这可能会引起短暂的内网解析抖动。`)) return;
+        if (!confirm(`确定要${action === 'restart' ? '重启' : action === 'start' ? '启动' : '关闭'} DNS 服务吗？`)) return;
 
         const startBtn = document.getElementById('header-btn-start');
         const stopBtn = document.getElementById('header-btn-stop');
@@ -442,11 +442,11 @@ function setupServiceActions() {
         })
         .then(res => res.json())
         .then(data => {
-            alert(data.message || '操作执行成功');
+            alert(data.message || '操作成功。');
             syncStatus();
         })
         .catch(err => {
-            alert('指令执行失败，请检查 Systemd 守护进程状态: ' + err.message);
+            alert('操作失败: ' + err.message);
         })
         .finally(() => {
             [startBtn, stopBtn, restartBtn].forEach(b => b.disabled = false);
@@ -460,10 +460,10 @@ function setupServiceActions() {
     const clearCacheBtn = document.getElementById('dash-btn-clear-cache');
     if (clearCacheBtn) {
         clearCacheBtn.addEventListener('click', () => {
-            if (!confirm('您确定要立即清空 MosDNS 的所有解析缓存吗？\n清空后，所有域名的解析记录将被重置，首次访问需要重新向上游发起解析请求。')) return;
+            if (!confirm('确定要清空缓存吗？')) return;
 
             clearCacheBtn.disabled = true;
-            clearCacheBtn.textContent = '🧹 清理中...';
+            clearCacheBtn.textContent = '清理中...';
 
             fetch('/api/cache/flush', {
                 method: 'POST'
@@ -473,16 +473,16 @@ function setupServiceActions() {
                 return res.json();
             })
             .then(data => {
-                alert(data.message || '缓存清空成功！');
+                alert(data.message || '缓存已清空。');
                 syncStatus(); // Refresh cache size metric
                 syncStats();  // Refresh dashboard graphs and counters
             })
             .catch(err => {
-                alert('清空缓存失败，请检查 MosDNS API 服务状态: ' + err.message);
+                alert('清空缓存失败: ' + err.message);
             })
             .finally(() => {
                 clearCacheBtn.disabled = false;
-                clearCacheBtn.textContent = '🧹 清空';
+                clearCacheBtn.textContent = '清空';
             });
         });
     }
@@ -536,20 +536,20 @@ function setupConfigEditor() {
     saveBtn.addEventListener('click', () => {
         const bodyText = textarea.value.trim();
         if (!bodyText) {
-            alert('配置文件内容不能为空！');
+            alert('内容不能为空。');
             return;
         }
 
-        if (!confirm('【高可用重要警示】\n保存配置将触发后端 DNS 语法预检验。若校验通过，系统在覆盖配置前会自动为您创建物理备份，并进行“本地解析金丝雀自检验”。若自检失败，系统会自动回滚配置，确保内网解析 100% 不会由于配置错误发生瘫痪。\n\n确认立即应用该配置吗？')) return;
+        if (!confirm('确定要保存并应用配置吗？')) return;
 
         saveBtn.disabled = true;
-        saveBtn.textContent = '💾 语法预检中...';
+        saveBtn.textContent = '保存中...';
 
         consoleContainer.className = 'editor-console console-expanded';
         consolePre.replaceChildren(); // Safe clear
         const line1 = document.createElement('div');
         line1.className = 'terminal-line text-info';
-        line1.textContent = '>> [!] 发起配置文件语法预检...';
+        line1.textContent = '>> 正在验证并保存配置...';
         consolePre.appendChild(line1);
 
         fetch('/api/config', {
@@ -563,36 +563,32 @@ function setupConfigEditor() {
             if (res.ok) {
                 const line2 = document.createElement('div');
                 line2.className = 'terminal-line text-success';
-                line2.textContent = `>> [SUCCESS] ${data.message || '配置更新应用成功，且金丝雀解析自测试通过！'}`;
+                line2.textContent = `>> 成功: ${data.message || '配置更新成功。'}`;
                 consolePre.appendChild(line2);
-                alert('🎉 配置更新成功，且本地 DNS 金丝雀自测健康，服务已平滑热重载上线！');
+                alert('配置更新成功。');
             } else {
                 // Categorized error display
                 const errorType = data.error || 'unknown';
-                const errorDesc = data.error_desc || data.error || '未知的应用报错';
+                const errorDesc = data.error_desc || data.error || '应用报错';
                 const errorOutput = data.output || '';
 
-                let icon = '❌';
                 let alertMsg = '';
                 let lineClass = 'text-error';
 
                 if (errorType === 'missing_files') {
-                    icon = '📁';
                     lineClass = 'text-warning';
-                    alertMsg = '⚠️ 配置引用了不存在的规则文件！请先在「系统运维」页面点击「更新地理规则包」生成缺失文件，然后再保存配置。';
+                    alertMsg = '配置引用了不存在的规则文件。';
                 } else if (errorType === 'validation_failed') {
-                    icon = '🔧';
-                    alertMsg = '❌ 配置语法校验失败！请检查 YAML 格式和插件配置。生产配置未被修改，DNS 服务不受影响。';
+                    alertMsg = '配置语法校验失败，请检查格式。';
                 } else if (errorType === 'canary_failed') {
-                    icon = '🔄';
-                    alertMsg = '⚠️ 金丝雀健康检查失败！系统已自动回滚到上一个稳定配置，DNS 服务已恢复正常。';
+                    alertMsg = '服务检查失败，已自动回滚。';
                 } else {
-                    alertMsg = '❌ 配置保存失败！请查看控制台输出。';
+                    alertMsg = '配置保存失败。';
                 }
 
                 const lineErr = document.createElement('div');
                 lineErr.className = `terminal-line ${lineClass}`;
-                lineErr.textContent = `>> [${icon} ERROR] ${errorDesc}`;
+                lineErr.textContent = `>> 错误: ${errorDesc}`;
                 consolePre.appendChild(lineErr);
 
                 if (errorOutput) {
@@ -608,13 +604,13 @@ function setupConfigEditor() {
         .catch(err => {
             const lineErr = document.createElement('div');
             lineErr.className = 'terminal-line text-error';
-            lineErr.textContent = `>> [ERROR] 访问接口失败: ${err.message}`;
+            lineErr.textContent = `>> 错误: ${err.message}`;
             consolePre.appendChild(lineErr);
-            alert('网络传输故障，配置保存失败！');
+            alert('网络故障，配置保存失败。');
         })
         .finally(() => {
             saveBtn.disabled = false;
-            saveBtn.textContent = '💾 保存并应用';
+            saveBtn.textContent = '保存并应用';
             syncStatus();
         });
     });
@@ -677,9 +673,9 @@ function renderRulesList() {
             }
             if (!rule.enabled) {
                 btn.classList.add('disabled-state');
-                btn.textContent = '🔒 ' + rule.filename + ' (已停用)';
+                btn.textContent = rule.filename + ' (已停用)';
             } else {
-                btn.textContent = '🔒 ' + rule.filename;
+                btn.textContent = rule.filename;
             }
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
@@ -705,9 +701,9 @@ function renderRulesList() {
             }
             if (!rule.enabled) {
                 btn.classList.add('disabled-state');
-                btn.textContent = '✏️ ' + rule.filename + ' (已停用)';
+                btn.textContent = rule.filename + ' (已停用)';
             } else {
-                btn.textContent = '✏️ ' + rule.filename;
+                btn.textContent = rule.filename;
             }
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.rule-file-btn').forEach(b => b.classList.remove('active'));
@@ -765,12 +761,12 @@ function loadRuleFileContent(file) {
             
             if (isReadOnly) {
                 saveBtn.disabled = true;
-                saveBtn.textContent = '🔒 只读保护';
+                saveBtn.textContent = '只读保护';
                 label.textContent = `/opt/mosdns/bin/${file} (自动下载，只读)`;
                 if (helperCard) helperCard.style.display = 'none';
             } else {
                 saveBtn.disabled = false;
-                saveBtn.textContent = '💾 保存域名规则';
+                saveBtn.textContent = '保存域名规则';
                 label.textContent = `/opt/mosdns/bin/${file}`;
                 if (helperCard) helperCard.style.display = 'block';
             }
@@ -810,23 +806,22 @@ function setupRulesManager() {
     if (createBtn) {
         createBtn.addEventListener('click', () => {
             const activeCategory = state.rulesActiveSubtab;
-            const categoryLabel = activeCategory === 'local' ? '直连本地' : '代理远程';
-            const filename = prompt(`【新建自定义域名列表】\n当前分类: ${categoryLabel}\n\n请输入新建的列表文件名（例如: my-list.txt）\n必须以 .txt 结尾，且仅包含字母、数字、下划线和连字符：`);
+            const filename = prompt('请输入新建的文件名（如 my-list.txt）：');
             if (filename === null) return;
 
             const cleanName = filename.trim();
             if (!cleanName) {
-                alert('文件名不能为空！');
+                alert('文件名不能为空。');
                 return;
             }
 
             if (!/^[a-zA-Z0-9_@.-]+\.txt$/.test(cleanName)) {
-                alert('文件名不合法！必须以 .txt 结尾，且只能包含英文、数字、下划线(_)、连字符(-)、点(.)和艾特(@)符号。\n例如: my-custom-domains@cn.txt');
+                alert('文件名格式错误。');
                 return;
             }
 
             createBtn.disabled = true;
-            createBtn.textContent = '⏳ 创建中...';
+            createBtn.textContent = '创建中...';
 
             fetch('/api/rules/create', {
                 method: 'POST',
@@ -840,8 +835,7 @@ function setupRulesManager() {
             })
             .then(async res => {
                 if (res.ok) {
-                    const result = await res.json();
-                    alert(result.message || '自定义域名列表创建成功，已生效！');
+                    alert('创建成功。');
                     
                     // Refresh rules
                     fetch('/api/rules')
@@ -854,15 +848,15 @@ function setupRulesManager() {
                         });
                 } else {
                     const errMsg = await res.text();
-                    alert(`❌ 创建失败: ${errMsg}`);
+                    alert('创建失败: ' + errMsg);
                 }
             })
             .catch(err => {
-                alert('创建文件请求失败，网络异常: ' + err.message);
+                alert('创建失败: ' + err.message);
             })
             .finally(() => {
                 createBtn.disabled = false;
-                createBtn.textContent = '➕ 新建列表';
+                createBtn.textContent = '新建列表';
                 syncStatus();
             });
         });
@@ -875,14 +869,14 @@ function setupRulesManager() {
             
             const isReadOnly = (state.onlineRules || []).includes(state.selectedRuleFile);
             if (isReadOnly) {
-                alert('该列表为自动定时更新的只读列表，不支持手动修改。');
+                alert('只读列表不支持修改。');
                 return;
             }
 
-            if (!confirm(`【防断网自愈保障】\n修改列表域名后，后端在重新加载 DNS 服务前会自动创建备份；如果重启后本地解析遭遇不可抗拒的故障，系统会自动回滚并还原该文件。\n\n您确认提交修改 '${state.selectedRuleFile}' 吗？`)) return;
+            if (!confirm('确定要保存修改吗？')) return;
 
             saveBtn.disabled = true;
-            saveBtn.textContent = '💾 提交并测试...';
+            saveBtn.textContent = '正在保存...';
 
             fetch(`/api/rules/content?file=${encodeURIComponent(state.selectedRuleFile)}`, {
                 method: 'POST',
@@ -890,18 +884,18 @@ function setupRulesManager() {
             })
             .then(async res => {
                 if (res.ok) {
-                    alert(`🎉 域名列表 '${state.selectedRuleFile}' 应用成功，主主解析自测试通过，服务已平滑重载！`);
+                    alert(`域名列表 '${state.selectedRuleFile}' 保存成功。`);
                 } else {
                     const text = await res.text();
-                    alert(`❌ 域名列表加载失败！已自动触发安全回滚。\n详情: ${text}`);
+                    alert(`保存失败，已自动恢复: ${text}`);
                 }
             })
             .catch(err => {
-                alert('网络传输故障，列表保存失败！' + err.message);
+                alert('保存失败: ' + err.message);
             })
             .finally(() => {
                 saveBtn.disabled = false;
-                saveBtn.textContent = '💾 保存域名规则';
+                saveBtn.textContent = '保存域名规则';
                 syncStatus();
             });
         });
@@ -922,7 +916,7 @@ function setupRulesManager() {
             const isChecked = e.target.checked;
             const actionWord = isChecked ? '启用' : '停用';
             
-            if (!confirm(`【启用/停用确认】\n您确认要 ${actionWord} 规则列表 '${targetFile}' 吗？\n切换状态后，后端会自动重新加载并校验系统主主 DNS 解析。`)) {
+            if (!confirm(`确定要${actionWord}该列表吗？`)) {
                 e.target.checked = !isChecked; // Restore
                 return;
             }
@@ -941,8 +935,7 @@ function setupRulesManager() {
             })
             .then(async res => {
                 if (res.ok) {
-                    const data = await res.json();
-                    alert(`🎉 ${data.message || '切换状态成功！'}`);
+                    alert('操作成功。');
                     // Refresh completely
                     fetch('/api/rules')
                         .then(r => r.json())
@@ -953,12 +946,12 @@ function setupRulesManager() {
                         });
                 } else {
                     const errMsg = await res.text();
-                    alert(`❌ 操作失败，已自动恢复！\n详情: ${errMsg}`);
+                    alert('操作失败，已恢复: ' + errMsg);
                     e.target.checked = !isChecked;
                 }
             })
             .catch(err => {
-                alert('通信故障，操作失败: ' + err.message);
+                alert('操作失败: ' + err.message);
                 e.target.checked = !isChecked;
             })
             .finally(() => {
@@ -1189,7 +1182,7 @@ function setupRealtimeSSE() {
         btnMaint.classList.remove('remove'); // Typo protection
         btnMaint.classList.remove('active');
         maintTerminal.replaceChildren();
-        appendTerminalLine("// 正在连接系统物理日志流 /var/log/mosdns/mosdns.log ...", 'dim');
+        appendTerminalLine("// 正在连接系统日志流 /var/log/mosdns/mosdns.log ...", 'dim');
     });
 }
 
@@ -1223,7 +1216,7 @@ function appendTerminalLine(text, style) {
    ======================================================= */
 function setupMaintenance() {
     const runMaintenance = (action, jobName) => {
-        if (!confirm(`【警告：DNS 关键操作】\n您确定要立即在线执行 '${jobName}' 指令吗？\n升级过程中，系统在拉取完成且自检完全通过前不会停止原解析进程。在最后应用时可能产生毫秒级的自测试切换，通常不会影响网络。`)) return;
+        if (!confirm(`确定要执行${jobName}吗？`)) return;
 
         // Force switch terminal view to Maintenance console
         state.consoleMode = 'maint';
@@ -1243,28 +1236,28 @@ function setupMaintenance() {
             } else if (line.startsWith('[SUCCESS]')) {
                 appendTerminalLine(line, 'success');
                 sseSource.close();
-                alert(`🎉 恭喜，'${jobName}' 任务已安全且稳定地执行完毕！`);
+                alert(`任务 '${jobName}' 执行完毕。`);
                 syncStatus();
             } else if (line.startsWith('[ERROR]')) {
                 appendTerminalLine(line, 'error');
                 sseSource.close();
-                alert(`❌ 运维任务 '${jobName}' 执行报错，系统已自动实施安全保护机制，阻断了损坏更新！`);
+                alert(`任务 '${jobName}' 执行失败。`);
             } else {
                 appendTerminalLine(line, 'sys');
             }
         };
 
         sseSource.onerror = (err) => {
-            appendTerminalLine(">> [ERROR] 终端日志连接意外中断。指令可能仍在后台安全执行，请稍后刷新面板确认。", 'error');
+            appendTerminalLine(">> [ERROR] 终端连接中断，可能仍在后台执行，请稍后刷新确认。", 'error');
             sseSource.close();
         };
     };
 
     document.getElementById('maint-btn-geo').addEventListener('click', () => {
-        runMaintenance('update-geo', '一键规则升级');
+        runMaintenance('update-geo', '规则升级');
     });
 
     document.getElementById('maint-btn-bin').addEventListener('click', () => {
-        runMaintenance('update-bin', '一键二进制升级');
+        runMaintenance('update-bin', '二进制升级');
     });
 }

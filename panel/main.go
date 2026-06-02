@@ -231,8 +231,8 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{
 				"error":      "missing_files",
-				"error_desc": fmt.Sprintf("配置引用了 %d 个不存在的规则文件，请先在「系统运维」页面执行「更新地理规则包」生成这些文件。", len(missingFiles)),
-				"output":     fmt.Sprintf("缺失文件列表：%s", strings.Join(missingFiles, ", ")),
+				"error_desc": "配置引用了未生成的规则文件，请先升级数据包。",
+				"output":     fmt.Sprintf("缺失文件：%s", strings.Join(missingFiles, ", ")),
 			})
 			return
 		}
@@ -271,7 +271,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(map[string]string{
 					"error":      "validation_failed",
-					"error_desc": "配置文件语法校验失败，mosdns 无法解析该配置。请检查 YAML 格式及插件配置。",
+					"error_desc": "配置文件语法校验失败，请检查 YAML 格式。",
 					"output":     outputStr,
 				})
 				return
@@ -335,7 +335,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
 			"error":      "canary_failed",
-			"error_desc": "金丝雀健康检查失败：DNS 无法正常解析。已自动回滚至上一个稳定配置。",
+			"error_desc": "DNS 检查失败，已自动回滚。",
 			"output":     rollbackMsg,
 		})
 		return
@@ -509,7 +509,7 @@ func handleRuleFileContent(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Service resolution test failed after saving list. Rollback triggered automatically to restore DNS connectivity.",
+			"error": "DNS 检查失败，已自动回滚。",
 		})
 		return
 	}
@@ -868,7 +868,7 @@ func handleRulesCreate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"message":  fmt.Sprintf("成功创建列表并激活，已自动挂载至 config-v5.yaml 的 %s 区域中！", configTag),
+		"message":  fmt.Sprintf("列表创建成功，并已应用至 %s 区域。", configTag),
 		"filename": filename,
 	})
 }
@@ -922,9 +922,9 @@ func handleRulesToggle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var msg string
 	if req.Enabled {
-		msg = fmt.Sprintf("成功启用规则列表 '%s'，并已在 config-v5.yaml 中激活使能！", filename)
+		msg = fmt.Sprintf("已启用规则列表 '%s'。", filename)
 	} else {
-		msg = fmt.Sprintf("成功停用规则列表 '%s'，已在 config-v5.yaml 中安全屏蔽并热重载！", filename)
+		msg = fmt.Sprintf("已停用规则列表 '%s'。", filename)
 	}
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": msg,

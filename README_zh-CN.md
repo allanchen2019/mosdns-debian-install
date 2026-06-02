@@ -1,41 +1,37 @@
 [English](./README.md) | 简体中文
 
-一个在Debian（或衍生版）上安装[mosdns](https://github.com/IrineSistiana/mosdns)的shell脚本与生产级高可用配置。
+在 Debian（或其衍生版）上安装 [mosdns](https://github.com/IrineSistiana/mosdns) 的 shell 脚本与分流配置。
 
-2023-3-19更新：兼容V5，要安装之前的就砍掉重练吧。
-
-# 重要！先决条件：需要事先为DNS服务器做好IP分流。
+# 重要！先决条件：需要事先为 DNS 服务器做好 IP 分流。
 
 有关更多详细信息，请参阅[此仓库](https://github.com/allanchen2019/ospf-over-wireguard)。
 
-### 一键多功能交互菜单 (主入口，支持安装、升级与卸载):
+### 一键交互菜单 (支持安装、升级与卸载):
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
-> [!TIP]
-> 运行此命令将直接启动 **MosDNS 终端图形交互菜单**，支持一键安装、更新 Geo 规则、热升级主程序、彻底卸载等。
-> 针对内存小于 256MB 的超低配置环境，安装菜单选项会自动检测并从 GitHub Releases 接口安全下载已由 CI 预编译好的二进制文件以规避本地编译 OOM，同时会自动降级为本地源码编译（`go build`）作为兜底备份，实现 100% 极速免编译部署。
+> 运行此命令将启动 **MosDNS 终端交互菜单**，支持安装、更新 Geo 规则、升级主程序、卸载等。
+> 针对低内存环境，安装选项会从 GitHub Releases 下载预编译的二进制文件，若下载失败则自动降级为本地源码编译（`go build`）。
 
-### 🖥️ MosDNS 毛玻璃 Web 控制面板:
-一键部署完成后，系统会自动拉起 `mosdns-panel.service` 控制面板守护进程：
-* **面板访问地址**：`http://<您的服务器IP>:8080` (支持内网局域网访问，自动适配暗黑/毛玻璃拟态 UI)
+### MosDNS Web 控制面板:
+安装完成后，系统会运行 `mosdns-panel.service` 守护进程：
+* **面板访问地址**：`http://<您的服务器IP>:8080` (支持内网访问)
 * **核心功能**：
-  * **实时仪表盘**：动态绘制 24 小时 DNS 解析波动图和内置的 Prometheus 高精内存缓存命中率、缓存容量状态。
-  * **解析日志审计**：流式推送实时解析详情（源 IP、查询域名、QType、缓存/上游命中状态、解析耗时）并持久化写入 SQLite。
-  * **在线编辑器**：可视化修改并校验 `config-v5.yaml`。支持将过滤域名集按 **“直连本地”** 和 **“代理远程”** 两大 Tab 切换管理，区分自动更新的只读列表（🔒）与自定义可编辑列表（✏️），并支持一键新建自定义列表、自动生成规则格式指导与示例模版。
-  * **游戏分流独立开关**：重构了游戏域名的拉取机制，支持从官方 V2Fly 官方源解压 ZIP 并递归编译出 12 个细粒度的游戏规则列表（如 Steam, Nintendo, PlayStation, Epic Games, Blizzard, EA, Riot, Roblox, Tencent, Mihoyo, Bilibili 及 Other 兜底等），并且每个列表都配备了独立的 **“启用/停用”** 开关，实现超精细的游戏直连与代理控制。
-  * **实时终端控制台**：系统日志滚屏回显与一键脚本运行。
+  * **仪表盘**：展示解析流量趋势及缓存状态。
+  * **解析日志审计**：流式推送解析详情并写入 SQLite。
+  * **在线编辑器**：修改并检查 `config-v5.yaml`。管理域名过滤列表，区分为只读列表与自定义可编辑列表。
+  * **游戏分流开关**：支持细粒度的游戏规则列表（如 Steam, Nintendo, PlayStation, Epic Games, Blizzard, EA, Riot, Roblox, Tencent, Mihoyo, Bilibili 及其他游戏），并配备独立的启用开关。
+  * **终端控制台**：显示日志与执行输出。
 
-### 自动守护更新 (Systemd Timer 机制):
-项目已原生集成了 **Systemd 定时任务守护**，无需手动配置繁琐且容易失效的系统 `crontab`。
-在安装完成后，系统会自动注册并启动 `mosdns-update.timer` 定时器，**默认在每周日凌晨 04:00 自动触发数据更新 (`update-geo.sh`) 与热重载自愈自检**。
+### 定时任务更新 (Systemd Timer):
+在安装完成后，系统会自动运行 `mosdns-update.timer` 定时器，默认在每周日凌晨 04:00 自动触发数据更新 (`update-geo.sh`)。
 
-你只需使用以下指令即可管理和审计定时任务：
+可以使用以下指令管理该定时任务：
 ```bash
-# 查看定时更新任务的下一次触发时间与当前运行状态
+# 查看定时更新任务状态
 systemctl status mosdns-update.timer
 
-# 查看定时更新任务的历史运行日志与执行审计
+# 查看定时更新任务的日志
 journalctl -u mosdns-update.service -n 50
 ```
 
@@ -44,17 +40,17 @@ journalctl -u mosdns-update.service -n 50
 /opt/mosdns/update-geo.sh
 ```
 
-### 手动只更新可执行二进制:
+### 手动更新二进制文件:
 ```bash
 /opt/mosdns/update-bin.sh
 ```
 
-### 卸载 (连同 Web 面板服务彻底清理):
+### 卸载:
 ```bash
 /opt/mosdns/uninstall.sh
 ```
 
-### 如不能正常安装，请先重置DNS:
+### 若不能正常安装，请先恢复 DNS 配置:
 ```bash
 rm -rf /etc/resolv.conf
 cat << EOF >/etc/resolv.conf
@@ -68,9 +64,9 @@ cd ~
 
 ---
 
-## 🚀 Homelab 核心 DNS 转发架构 (MosDNS v5)
+## Homelab 核心 DNS 转发架构 (MosDNS v5)
 
-当前 MosDNS v5 已完成了生产级的高级分流、防污染和内网解析自治优化。其解析逻辑流水线（Pipeline）如下图所示：
+本配置提供了适用于局域网环境的 DNS 解析与分流逻辑。其解析逻辑流水线（Pipeline）如下图所示：
 
 ```text
                      +-----------------------+
@@ -79,120 +75,118 @@ cd ~
                                  |
                                  v
                      +-----------------------+
-                     |   mem_cache Check     | <--- [乐观缓存 (持久化至 cache.dump)]
+                     |   mem_cache Check     | <--- [内存缓存 (持久化至 cache.dump)]
                      +-----------+-----------+
                                  |
-                  +--------------+--------------+
-                  |                             |
-            [Cache Hit]                   [Cache Miss]
-                  |                             |
-                  v                             v
-           +--------------+            +-----------------+
-           | Return Resp  |            | Match Rule Set? |
-           +--------------+            +--------+--------+
-                                                |
-         +-------------------+------------------+------------------+
-         | (A) Local Domain  | (B) China Domain | (C) Proxy Domain | (D) Default Fallback
-         |   - *.lan, *.local|   - china-list   |   - proxy-list   |   - Other Domains
-         |   - Single Label  |   - apple-cn     |                  |
-         |   - Private PTR   |                  |                  |
-         v                   v                  v                  v
-  +--------------+    +--------------+   +--------------+   +---------------+
-  | MikroTik GW  |    | China Public |   |  Secure DoT  |   |  China Public |
-  | 192.168.4.1  |    |  119.29.29.29|   | 8.8.8.8:853  |   |    Query      |
-  |              |    |   223.5.5.5  |   | 1.1.1.1:853  |   +-------+-------+
-  +------+-------+    +------+-------+   +------+-------+           |
-         |                   |                  |                   v
-         |                   |                  |             [Is Resp IP?]
-         |                   |                  |             /           \
-         |                   |                  |         [CN IP]        [Foreign IP]
-         |                   |                  |          /                   \
-         |                   |                  |         v                     v
-         |                   |                  |  +-------------+       +--------------+
-         |                   |                  |  | Accept IP & |       | Drop Resp &  |
-         |                   |                  |  | Return      |       | Query DoT    |
-         |                   |                  |  +-------------+       +-------+------+
-         |                   |                  |         |                      |
-         v                   v                  v         v                      v
-  +---------------------------------------------------------------------------------+
-  |                            Return Answer to Client                              |
-  +---------------------------------------------------------------------------------+
+                   +--------------+--------------+
+                   |                             |
+             [Cache Hit]                   [Cache Miss]
+                   |                             |
+                   v                             v
+            +--------------+            +-----------------+
+            | Return Resp  |            | Match Rule Set? |
+            +--------------+            +--------+--------+
+                                                 |
+          +-------------------+------------------+------------------+
+          | (A) Local Domain  | (B) China Domain | (C) Proxy Domain | (D) Default Fallback
+          |   - *.lan, *.local|   - china-list   |   - proxy-list   |   - Other Domains
+          |   - Single Label  |   - apple-cn     |                  |
+          |   - Private PTR   |                  |                  |
+          v                   v                  v                  v
+   +--------------+    +--------------+   +--------------+   +---------------+
+   | MikroTik GW  |    | China Public |   |  Secure DoT  |   |  China Public |
+   | 192.168.4.1  |    |  119.29.29.29|   | 8.8.8.8:853  |   |    Query      |
+   |              |    |   223.5.5.5  |   | 1.1.1.1:853  |   +-------+-------+
+   +------+-------+    +------+-------+   +------+-------+           |
+          |                   |                  |                   v
+          |                   |                  |             [Is Resp IP?]
+          |                   |                  |             /           \
+          |                   |                  |         [CN IP]        [Foreign IP]
+          |                   |                  |          /                   \
+          |                   |                  |         v                     v
+          |                   |                  |  +-------------+       +--------------+
+          |                   |                  |  | Accept IP & |       | Drop Resp &  |
+          |                   |                  |  | Return      |       | Query DoT    |
+          |                   |                  |  +-------------+       +-------+------+
+          |                   |                  |         |                      |
+          v                   v                  v         v                      v
+   +---------------------------------------------------------------------------------+
+   |                            Return Answer to Client                              |
+   +---------------------------------------------------------------------------------+
 ```
 
-### 📋 核心解析规则与设计决策
+### 解析规则与设计
 
-#### 1. ⚡️ 内存乐观缓存 (mem_cache)
-*   **配置**：开启 20,480 容量 of Lazy Cache，TTL 最大延长至 86,400 秒。
+#### 1. 内存缓存 (mem_cache)
+*   **配置**：开启 20,480 容量的 Lazy Cache，TTL 最大延长至 86,400 秒。
 *   **持久化**：每 10 分钟自动将内存缓存 Dump 至本地 `/opt/mosdns/bin/cache.dump`。
-*   **收益**：服务重启或资源更新后瞬间读取 Dump 缓存文件，消解冷启动导致的内网 DNS 抖动，常用域名解析延迟在微秒级（`0 ms` 级体验）。
+*   **收益**：服务重启或资源更新后读取缓存文件，减少冷启动导致的局域网解析延迟。
 
-#### 2. 🏠 局域网自治分流 (local_router_sequence)
+#### 2. 局域网解析 (local_router_sequence)
 *   **匹配规则**：`local-domain.txt`（包含 `*.lan`, `*.local`, `*.homelab` 域名及私有 IP 段的反向 PTR 解析）。
-*   **单 Label 拦截**：采用 `regexp:^[^.]+$` 完美闭环无后缀的局域网主机名解析（如 `pve`, `nas`）。
-*   **上游转发**：全量路由给本地网关网卡 `192.168.4.1` (MikroTik Router)。
-*   **收益**：消除了内网 DNS 隐私向外网 DoT 泄漏的安全风险，本地域名解析响应时间从 `60ms+` 缩短至 `<10ms`。
+*   **单 Label 拦截**：采用 `regexp:^[^.]+$` 匹配无后缀的局域网主机名解析（如 `pve`, `nas`）。
+*   **上游转发**：路由给本地网关。
 
-#### 3. 🇨🇳 国内直连分流 (local_sequence)
+#### 3. 国内直连分流 (local_sequence)
 *   **匹配规则**：`china-list.txt`, `apple-cn.txt` 及直连白名单。
-*   **上游转发**：阿里公共 DNS（`223.5.5.5`）与腾讯公共 DNS（`119.29.29.29`）并发请求。
-*   **收益**：保证国内 CDN 节点完美调度，无解析偏差。
+*   **上游转发**：向阿里公共 DNS（`223.5.5.5`）与腾讯公共 DNS（`119.29.29.29`）发起并发请求。
 
-#### 4. 🔒 海外防污染加密通道 (remote_sequence)
+#### 4. 加密通道 (remote_sequence)
 *   **匹配规则**：`proxy-list.txt` 域名。
-*   **上游转发**：Google DoT (`tls://8.8.8.8:853`) 与 Cloudflare DoT (`tls://1.1.1.1:853`) 并发请求，规避运营商劫持。
-*   **自愈兜底**：使用自愈型 `fallback` 策略，以海外安全通道为主，若超时 500ms，无缝平滑降级至国内公共 DNS 保障网络高可用。
+*   **上游转发**：向 Google DoT (`tls://8.8.8.8:853`) 与 Cloudflare DoT (`tls://1.1.1.1:853`) 发起并发请求，规避运营商劫持。
+*   **自愈兜底**：使用 fallback 策略，以安全通道为主，若超时 500ms，则降级至国内公共 DNS 保证可用性。
 
-#### 5. 🛡️ 双保险兜底拦截 (fallback_sequence)
+#### 5. 兜底拦截 (fallback_sequence)
 *   对于未命中规则列表的未知域名，先发起国内 DNS 请求。
-*   如果解析返回的 IP **属于国内 IP 段 (`cn_ip`)**，则立刻采信并返回响应；
-*   如果解析返回的 IP **不属于国内 IP 段（或被污染成海外 IP）**，则果断丢弃该响应，强制唤醒海外 DoT 加密通道重试，确保 100% 抵御常规 DNS 劫持与污染。
+*   如果解析返回的 IP 属于国内 IP 段 (`cn_ip`)，则直接采信并返回响应；
+*   如果解析返回的 IP 不属于国内 IP 段，则丢弃该响应，强制通过 DoT 加密通道重试，防范解析污染。
 
-#### 6. 🌐 智能 EDNS 客户端子网 (ECS) 调度优化 (ecs_handler)
-*   **国内透传与注入 (`ecs_domestic`)**：在向国内 DNS（`local_sequence`/`fallback_sequence`）发起请求前执行。开启 `forward: true` 和 `send: true`。若下游已携带 ECS（如前端 AdGuard Home）则直接透传；若无则自动注入客户端所在的公网子网（IPv4 `/24`，IPv6 `/48`），保证国内 CDN 节点获取精准的本省本网解析调度，消除解析延迟。
-*   **国外隐私去识别化 (`ecs_remote`)**：在流向海外加密通道（`remote_sequence`）前执行。强制设置 `forward: false` 和 `send: false`。在任何情况下彻底剥离内网私有网段及拓扑隐私，捍卫海外域名解析的私密性，并防止国外 CDN 服务商发生跨洋调度错配。
-
----
-
-## 🛠️ 生产级高可用运维脚本系统
-
-本项目配套的部署与维护脚本经历全方位的工业级重构，确保 100% 的**幂等性、自愈防断网、并发隔离与零下线升级能力**：
-
-1. **`AutoSetup.sh` (极速免冗余引导)**
-   * 精简了原本强制安装 PIP 等与 MosDNS 无关的庞大 Python 依赖，极大节省空间并加快部署速度。
-   * 引入自适应 Git 更新机制，当 `/opt/mosdns` 存在时自动执行版本拉取对齐，完美支持二次幂等部署。
-2. **`install-mosdns.sh` (零离线热安装器)**
-   * **防止停用断网死锁**：在安装和卸载旧服务的生存周期中，临时接管系统 `/etc/resolv.conf` 配置为公共 DNS。100% 避免因旧服务停用导致 `wget` 无法解析 GitHub 域名的尴尬死锁。
-   * **金丝雀可用性校验**：新服务启动后，先对本地 `127.0.0.1:53` 进行权威域名解析自检，确认完全健康后，才正式将系统解析主服务器切回本地回环地址。
-3. **`update-geo.sh` (数据包物理校验更新)**
-   * 采用原子性临时下载方案，内置双阈值限制校验（行数必须大于 10,000 行，文件体积必须大于 200KB）。彻底防御因网络超时或运营商劫持下载到空包、乱码直接导致 MosDNS 解析挂死。
-   * **并发隔离保护**：独立使用 `backup-geo` 备份空间，避免并发更新时临时备份文件被互相覆盖。
-4. **`update-bin.sh` (二进制零死锁热升级)**
-   * 升级架构判定引擎（兼容 `uname -m` 兜底），完美适配 Alpine/极简 LXC 等未装 `dpkg` 的精简系统。
-   * 使用 `mv` 虚拟文件系统原子替换，彻底绕过 Linux 经典的 `Text file busy` 进程占用报错。
-   * 独立使用 `backup-bin` 备份空间，升级失败 2 秒内启动自动回滚自愈机制，绝不离线。
-5. **`uninstall.sh` (无下线优雅卸载回滚)**
-   * **防自杀崩溃机制**：先在内存中抢先一步完成 DNS 状态重写与 `systemd-resolved` 软链接重建，最后再删除自身物理文件夹，避免由于脚本自身先于恢复指令删除而导致回滚被迫瘫痪的致命漏洞。
+#### 6. EDNS 客户端子网 (ECS) 调度 (ecs_handler)
+*   **国内透传与注入 (`ecs_domestic`)**：在向国内 DNS 发起请求前执行。若下游已携带 ECS 则透传；若无则自动注入客户端所在的公网子网，以获取更精确的 CDN 解析调度。
+*   **国外隐私去识别化 (`ecs_remote`)**：在流向海外加密通道前执行。清除内网私有网段及拓扑隐私，保护解析的私密性。
 
 ---
 
-## ⚙️ 运维与日志审计
+## 运维脚本系统
 
-### A. 定时资源更新自愈机制
-*   系统已集成 systemd 定时器守护：`mosdns-update.timer`，每周日凌晨 04:00 自动触发，无需依赖传统 crontab。
-*   查看下一次自动更新触发点：
+本项目配套的部署与维护脚本提供以下功能：
+
+1. **`AutoSetup.sh` (自动引导脚本)**
+   * 移除无关的依赖安装，加快部署速度。
+   * 支持二次幂等部署。
+2. **`install-mosdns.sh` (热安装器)**
+   * **临时接管 DNS**：在安装和卸载期间，临时将系统 DNS 配置为公共 DNS，避免因旧服务停用导致解析死锁。
+   * **启动可用性校验**：新服务启动后，先对本地 `127.0.0.1:53` 进行域名解析自检，确认无误后才切换为主 DNS。
+3. **`update-geo.sh` (数据包更新与校验)**
+   * 采用原子性临时下载，并内置文件行数与体积限制校验，防止下载到空包或损坏的文件。
+   * **并发隔离**：使用独立的备份空间，避免并发更新时临时备份文件被互相覆盖。
+4. **`update-bin.sh` (二进制热升级)**
+   * 升级架构自动判定，兼容极简系统。
+   * 使用 `mv` 虚拟文件系统原子替换，避开进程占用报错。
+   * 升级失败时自动启动回滚机制。
+5. **`uninstall.sh` (优雅卸载)**
+   * 优先重写 DNS 状态并重建 `systemd-resolved` 软链接，最后再清理物理文件夹，避免由于脚本自身被删导致回滚瘫痪。
+
+---
+
+## 运维与日志审计
+
+### A. 定时资源更新
+*   系统集成了 systemd 定时器：`mosdns-update.timer`，每周日凌晨 04:00 自动触发，无需依赖 cron。
+*   查看自动更新任务状态：
     ```bash
     systemctl status mosdns-update.timer
     ```
 
-### B. 生产级日志与归档审计
-*   服务日志输出路径已规范至稳固的物理文件：`/var/log/mosdns/mosdns.log`
-*   已部署 `/etc/logrotate.d/mosdns` 日志轮转，采用 `copytruncate` 模式每日切割，保留 30 天历史数据，彻底解决 LXC 空间撑爆的后顾之忧。
-*   实时日志回显审计：
+### B. 日志与归档审计
+*   服务日志输出路径为：`/var/log/mosdns/mosdns.log`
+*   已配置 `/etc/logrotate.d/mosdns` 日志轮转，每日切割，保留 30 天历史数据。
+*   实时日志回显：
     ```bash
     tail -f /var/log/mosdns/mosdns.log | grep -E '\[router_hit\]|\[remote_hit_resilient\]'
     ```
 
 ---
 
-## 📄 License
+## License
 This project is open-source. For more info, please see the source scripts.

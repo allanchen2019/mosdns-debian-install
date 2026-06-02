@@ -1,0 +1,14 @@
+# Global Phrasing & Style Rules
+
+## 1. No Emojis
+- Do not output or write any emojis in user interfaces, error messages, backend api responses, or documentation files (such as README) unless explicitly requested.
+
+## 2. Eliminate Fluff and Promotional Terms
+- Avoid marketing fluff and boastful language. Examples to avoid: "生产级", "金丝雀", "智能高可用", "100%", "perfect", "highly-optimized", "self-healing", "zero-downtime", "enterprise-grade".
+- Keep descriptions, comments, and instructions functional, technical, and objective.
+
+## 3. Single-Sentence Alerts and Explanations
+- Keep alerts (`alert`, `confirm`), warnings, guidance, and status prompts strictly limited to a single concise sentence.
+
+## 4. No Absolute or Assured Claims
+- Avoid overly absolute, definite, or assured statements. Use neutral, objective, and cautious language (e.g., "typically", "generally", "reduces chance of", instead of "completely guarantees", "absolutely prevents").
