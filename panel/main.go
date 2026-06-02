@@ -931,13 +931,14 @@ func handleRulesToggle(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleCacheFlush clears the cache in the local MosDNS instance via HTTP API
+// handleCacheFlush clears the cache in the local MosDNS instance via HTTP API and removes the persistence file
 func handleCacheFlush(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// 1. Flush in-memory cache
 	client := &http.Client{Timeout: 3 * time.Second}
 	resp, err := client.Get("http://127.0.0.1:9080/flush")
 	if err != nil {
@@ -959,8 +960,12 @@ func handleCacheFlush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 2. Remove cache dump files on disk to prevent reloading on restart
+	os.Remove("/opt/mosdns/bin/cache.dump")
+	os.Remove("/opt/mosdns/cache.dump")
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Cache flushed successfully",
+		"message": "Cache flushed successfully (memory and persistence cleared)",
 	})
 }
