@@ -56,6 +56,6 @@ jobs:
           tag: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
           name: ${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || 'Latest Precompiled Panel Binaries' }}
           prerelease: ${{ github.ref_type != 'tag' }}
-          generateReleaseNotes: true
+          bodyFile: "RELEASE_NOTES.md"
           artifacts: "mosdns-panel-linux-amd64,mosdns-panel-linux-arm64"
           token: ${{ secrets.GITHUB_TOKEN }}
