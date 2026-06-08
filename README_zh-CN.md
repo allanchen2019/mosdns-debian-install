@@ -1,4 +1,4 @@
-[English](./README.md) | 简体中文
+[English](./README_EN.md) | 简体中文
 
 在 Debian（或其衍生版）上安装 [mosdns](https://github.com/IrineSistiana/mosdns) 的 shell 脚本与分流配置。
 
@@ -188,5 +188,19 @@ cd ~
 
 ---
 
-## License
-This project is open-source. For more info, please see the source scripts.
+## 参考资料与致谢 (References & Acknowledgments)
+
+### 参考资料 (References)
+- [MosDNS v5 官方文档](https://irinesistiana.github.io/mosdns/)
+- [OSPF over WireGuard 分流方案](https://github.com/allanchen2019/ospf-over-wireguard)
+
+### 致谢项目 (Acknowledgments)
+特别感谢以下开源项目，本项目的设计与分流数据直接或间接地引用了它们：
+- **[IrineSistiana/mosdns](https://github.com/IrineSistiana/mosdns)**：本项目核心所依赖的 DNS 转发引擎。
+- **[v2fly/domain-list-community](https://github.com/v2fly/domain-list-community)**：提供丰富准确的全球域名分流规则数据。
+- **[Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)**：为规则更新脚本提供稳定的自动化路由规则源。
+- **[felixonmars/dnsmasq-china-list](https://github.com/felixonmars/dnsmasq-china-list)**：提供国内直连域名的精确数据支持。
+
+## 开源协议 (License)
+
+本项目采用 **[MIT 协议](file:///opt/mosdns/LICENSE)** 开源。
