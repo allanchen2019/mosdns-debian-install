@@ -28,6 +28,11 @@ type DomainStat struct {
 	Count  int    `json:"count"`
 }
 
+type ClientStat struct {
+	ClientIP string `json:"client_ip"`
+	Count    int    `json:"count"`
+}
+
 type StatusStat struct {
 	Status string `json:"status"`
 	Count  int    `json:"count"`
@@ -43,6 +48,7 @@ type StatsSummary struct {
 	AvgDuration  float64      `json:"avg_duration_ms"`
 	CacheHitRate float64      `json:"cache_hit_rate"`
 	TopDomains   []DomainStat `json:"top_domains"`
+	TopClients   []ClientStat `json:"top_clients"`
 	StatusDist   []StatusStat `json:"status_dist"`
 	HourlyVolume []HourlyStat `json:"hourly_volume"`
 }
@@ -184,6 +190,7 @@ func GetStatsSummary() (StatsSummary, error) {
 	if summary.TotalQueries == 0 {
 		// Return empty summary gracefully if no records exist in last 24 hours
 		summary.TopDomains = []DomainStat{}
+		summary.TopClients = []ClientStat{}
 		summary.StatusDist = []StatusStat{}
 		summary.HourlyVolume = []HourlyStat{}
 		return summary, nil
@@ -259,6 +266,28 @@ func GetStatsSummary() (StatsSummary, error) {
 		var hs HourlyStat
 		if err := rows3.Scan(&hs.Hour, &hs.Count); err == nil {
 			summary.HourlyVolume = append(summary.HourlyVolume, hs)
+		}
+	}
+
+	// 6. Top 10 queried clients
+	topClientsQuery := `
+		SELECT client_ip, COUNT(*) as c 
+		FROM query_logs 
+		WHERE time >= ? 
+		GROUP BY client_ip 
+		ORDER BY c DESC 
+		LIMIT 10`
+	rows4, err := DB.Query(topClientsQuery, timeThreshold)
+	if err != nil {
+		return summary, fmt.Errorf("failed to query top clients: %w", err)
+	}
+	defer rows4.Close()
+
+	summary.TopClients = []ClientStat{}
+	for rows4.Next() {
+		var cs ClientStat
+		if err := rows4.Scan(&cs.ClientIP, &cs.Count); err == nil {
+			summary.TopClients = append(summary.TopClients, cs)
 		}
 	}
 

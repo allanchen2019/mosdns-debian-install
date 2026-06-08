@@ -153,6 +153,24 @@
                         </div>
                     </div>
 
+                    <div class="client-rank-card glass-card">
+                        <h3>24H 热门客户端 Top 10</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>排名</th>
+                                        <th>客户端 IP</th>
+                                        <th>请求次数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-top-clients-body">
+                                    <tr><td colspan="3" class="text-center">暂无分析数据</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="upstream-rank-card glass-card">
                         <h3>解析策略命中分布</h3>
                         <div class="table-container">
@@ -268,10 +286,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="pagination-bar">
-                        <button class="page-btn" id="audit-prev-btn">上一页</button>
-                        <span class="page-info" id="audit-page-info">第 1 页</span>
-                        <button class="page-btn" id="audit-next-btn">下一页</button>
+                    <div class="pagination-bar" id="audit-scroll-status" style="justify-content: center;">
+                        <span class="page-info" id="audit-scroll-text">滑动加载更多...</span>
+                        <span class="page-info" id="audit-total-info" style="margin-left: 15px; opacity: 0.7;"></span>
                     </div>
                 </div>
             </section>
