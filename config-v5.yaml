@@ -165,11 +165,11 @@ plugins:
   - matches: has_resp
     exec: accept
 
-  - matches: "qname $direct_domain"
-    exec: goto local_sequence
-
   - matches: "qname $remote_domain"
     exec: goto remote_sequence
+
+  - matches: "qname $direct_domain"
+    exec: goto local_sequence
 
   - exec: goto fallback_sequence
 
