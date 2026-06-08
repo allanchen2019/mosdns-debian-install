@@ -641,7 +641,8 @@ func handleQueryStream(w http.ResponseWriter, r *http.Request) {
 // handleMaintenanceRun executes system update scripts and streams progress via SSE
 func handleMaintenanceRun(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
-	if action != "update-geo" && action != "update-bin" {
+	channel := r.URL.Query().Get("channel")
+	if action != "update-geo" && action != "update-sys" && action != "update-bin" {
 		http.Error(w, "Invalid maintenance action", http.StatusBadRequest)
 		return
 	}
@@ -657,7 +658,14 @@ func handleMaintenanceRun(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 	defer cancel()
 
-	err := RunMaintenanceScript(ctx, action, logWriter)
+	var err error
+	if action == "update-bin" {
+		// Map legacy action "update-bin" to "update-sys" on release channel for backward compatibility
+		err = RunMaintenanceScript(ctx, "update-sys", "release", logWriter)
+	} else {
+		err = RunMaintenanceScript(ctx, action, channel, logWriter)
+	}
+
 	if err != nil {
 		fmt.Fprintf(w, "data: [ERROR] Script execution reported error: %v\n\n", err)
 	} else {

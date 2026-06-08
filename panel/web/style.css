@@ -1364,3 +1364,27 @@ input:checked + .slider:before {
         color: var(--text-dim);
     }
 }
+
+/* Custom Maintenance Select Dropdown styling */
+.maint-select {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    width: 140px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-main);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.maint-select:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.maint-select option {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+}

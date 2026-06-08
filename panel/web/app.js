@@ -1320,7 +1320,7 @@ function appendTerminalLine(text, style) {
    9. MAINTENANCE OPERATIONS RUNNER (Stream Output via SSE)
    ======================================================= */
 function setupMaintenance() {
-    const runMaintenance = (action, jobName) => {
+    const runMaintenance = (action, jobName, channel = '') => {
         if (!confirm(`确定要执行${jobName}吗？`)) return;
 
         // Force switch terminal view to Maintenance console
@@ -1332,7 +1332,8 @@ function setupMaintenance() {
         terminal.replaceChildren(); // Safe clear
 
         // Start SSE stream trigger
-        const sseSource = new EventSource(`/api/maintenance/run?action=${action}`);
+        const sseUrl = `/api/maintenance/run?action=${action}${channel ? '&channel=' + channel : ''}`;
+        const sseSource = new EventSource(sseUrl);
         
         sseSource.onmessage = (event) => {
             const line = event.data;
@@ -1362,9 +1363,15 @@ function setupMaintenance() {
         runMaintenance('update-geo', '规则升级');
     });
 
-    document.getElementById('maint-btn-bin').addEventListener('click', () => {
-        runMaintenance('update-bin', '二进制升级');
-    });
+    const maintBtnSys = document.getElementById('maint-btn-sys');
+    if (maintBtnSys) {
+        maintBtnSys.addEventListener('click', () => {
+            const channelSelect = document.getElementById('maint-channel-select');
+            const channel = channelSelect ? channelSelect.value : 'release';
+            const channelLabel = channel === 'dev' ? '系统更新 (Dev 开发版)' : '系统更新 (Release 稳定版)';
+            runMaintenance('update-sys', channelLabel, channel);
+        });
+    }
 }
 
 function setupDataManagement() {
