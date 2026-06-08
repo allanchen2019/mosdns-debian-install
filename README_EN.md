@@ -96,13 +96,13 @@ After installation, the `mosdns-panel.service` is spawned automatically:
   * **Dashboard**: Displays query counts, optimistic cache hits/size/rates, system resource metrics (CPU/RAM), active service systemd logs, running uptime, compile version string, and a **Top 10 Client IP** lookup table.
   * **Query Audit**: Features continuous **infinite scroll** list loading, clickable client IP links for instant query filter drilling, and UTF-8 BOM CSV exports.
   * **Configuration Editor**: Allows modifying `config-v5.yaml` and rule lists. Built-in pre-flight YAML checker (via sandboxed timeout dry-runs) and missing referenced files warning.
-  * **Service Control & Updates**: Direct buttons to Restart, Start, or Stop the MosDNS daemon. System maintenance section supports 1-click panel upgrades, SQLite database backups, and **Update Channel switching** (Release stable tags or Dev commits) with automatic configuration backups and client-reconnection checks.
+  * **Service Control & Updates**: Direct buttons to Restart, Start, or Stop the MosDNS daemon. System maintenance section supports 1-click panel upgrades, SQLite database backups, and **Update Channel switching** (Release stable tags or Dev commits) with automatic configuration backups, client-reconnection checks, and a "Merge Upstream Changes" checkbox (uses `git merge-file` to perform a 3-way merge, automatically falling back to local files in case of conflicts to prevent DNS downtime).
   * **Layout**: Sleek glassmorphism theme, fixed card container heights with scrolling, and mobile responsive card-based tables.
 
 ### Local Maintenance Commands
 ```bash
-# Update to latest release/dev version manually
-/opt/mosdns/update-all.sh [release|dev]
+# Update to latest release/dev version manually (supports true/false to decide whether to merge upstream changes, default is false)
+/opt/mosdns/update-all.sh [release|dev] [true|false]
 
 # Update Geo list rules manually
 /opt/mosdns/update-geo.sh

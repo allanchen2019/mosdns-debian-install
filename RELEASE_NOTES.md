@@ -7,6 +7,7 @@
   - 在 Web 控制面板的“系统维护”卡片中新增了更新通道选择下拉框，并实现自重连与平滑升级体验。
   - 重构 `update-all.sh` 脚本，在执行更新和 git 检出前，自动备份并在完成后恢复用户配置文件 (`config-v5.yaml`)、SQLite 数据库 (`panel.db*`) 以及自定义域名规则列表 (`direct-domain.txt`, `local-domain.txt`)，避免数据丢失。
   - 解决由于本地配置/规则修改导致 Git 检出冲突的 Bug，采用 `git checkout -f` 强制切换以保证自更新逻辑的健壮性。
+  - 新增“自动合并上游修改”开关选项（支持 Web 端勾选以及 CLI 参数传导）。更新过程中使用 `git merge-file` 实现 `config-v5.yaml` 及 `local-domain.txt` 规则列表的三向智能合并。若存在合并冲突将自动安全退回本地版本，防止解析服务中断。
 
 - **自定义域名直连与局域网自治默认配置 (Default Custom Rules Initialization)**:
   - 优化 `install-mosdns.sh` 和 `update-all.sh`，在初次安装及日常更新时，自动检测并初始化 `direct-domain.txt`（默认包含 Taobao、AliCDN 和 `.cn` 的直连路由规则）和 `local-domain.txt`（包含局域网自治路由规则），确保最佳开箱体验。
