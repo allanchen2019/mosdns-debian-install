@@ -894,7 +894,17 @@ tr:hover td {
 .maintenance-actions-card {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+    overflow: hidden;
+}
+
+.maint-actions-scroll {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-right: 4px;
 }
 
 .card-helper {
@@ -1043,9 +1053,21 @@ tr:hover td {
     }
     .dashboard-middle-row,
     .dashboard-lists-row,
-    .rules-container,
+    .rules-container {
+        grid-template-columns: 1fr;
+    }
     .maintenance-grid {
         grid-template-columns: 1fr;
+        height: auto;
+        min-height: auto;
+        gap: 15px;
+    }
+    .maintenance-actions-card {
+        max-height: none;
+        overflow: visible;
+    }
+    .maintenance-logs-card {
+        height: 400px;
     }
     .editor-layout,
     .audit-layout {

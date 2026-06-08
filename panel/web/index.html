@@ -297,55 +297,57 @@
                         <h3>运维指令</h3>
                         <p class="card-helper">更新域名规则和 MosDNS 主程序。</p>
                         
-                        <div class="maint-action-group">
-                            <div class="action-meta">
-                                <h4>更新 DNS 规则数据包</h4>
-                                <p>下载中国大陆域名直连、苹果分流、海外防污染及 CN IP 段数据</p>
+                        <div class="maint-actions-scroll">
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>更新 DNS 规则数据包</h4>
+                                    <p>下载中国大陆域名直连、苹果分流、海外防污染及 CN IP 段数据</p>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-geo">规则升级</button>
                             </div>
-                            <button class="maint-btn" id="maint-btn-geo">规则升级</button>
-                        </div>
 
-                        <div class="maint-action-group">
-                            <div class="action-meta">
-                                <h4>系统更新与版本切换</h4>
-                                <p>更新 MosDNS 主程序、控制面板与规则配置。</p>
-                                <div class="channel-select-wrapper" style="margin-top: 8px;">
-                                    <label for="maint-channel-select" style="font-size: 13px; color: var(--text-dim); margin-right: 6px;">更新通道:</label>
-                                    <select id="maint-channel-select" class="maint-select">
-                                        <option value="release" selected>Release 稳定版</option>
-                                        <option value="dev">Dev 开发版</option>
-                                    </select>
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>系统更新与版本切换</h4>
+                                    <p>更新 MosDNS 主程序、控制面板与规则配置。</p>
+                                    <div class="channel-select-wrapper" style="margin-top: 8px;">
+                                        <label for="maint-channel-select" style="font-size: 13px; color: var(--text-dim); margin-right: 6px;">更新通道:</label>
+                                        <select id="maint-channel-select" class="maint-select">
+                                            <option value="release" selected>Release 稳定版</option>
+                                            <option value="dev">Dev 开发版</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-sys">系统更新</button>
+                            </div>
+
+                            <div class="maint-action-group service-control-group">
+                                <div class="action-meta">
+                                    <h4>DNS 服务控制</h4>
+                                    <p>重启、启动或停止本地 DNS 解析服务</p>
+                                </div>
+                                <div class="service-quick-actions">
+                                    <button class="action-btn btn-restart" id="header-btn-restart">重启服务</button>
+                                    <button class="action-btn btn-start" id="header-btn-start">启动</button>
+                                    <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
                                 </div>
                             </div>
-                            <button class="maint-btn" id="maint-btn-sys">系统更新</button>
-                        </div>
 
-                        <div class="maint-action-group service-control-group">
-                            <div class="action-meta">
-                                <h4>DNS 服务控制</h4>
-                                <p>重启、启动或停止本地 DNS 解析服务</p>
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>备份 SQLite 数据库</h4>
+                                    <p>下载当前控制面板的 SQLite 数据库备份文件 (.db)</p>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-backup">立即备份</button>
                             </div>
-                            <div class="service-quick-actions">
-                                <button class="action-btn btn-restart" id="header-btn-restart">重启服务</button>
-                                <button class="action-btn btn-start" id="header-btn-start">启动</button>
-                                <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
-                            </div>
-                        </div>
 
-                        <div class="maint-action-group">
-                            <div class="action-meta">
-                                <h4>备份 SQLite 数据库</h4>
-                                <p>下载当前控制面板的 SQLite 数据库备份文件 (.db)</p>
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>导出解析日志</h4>
+                                    <p>将所有解析审计历史导出为 CSV 格式文件，便于 Excel 分析</p>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-export">导出 CSV</button>
                             </div>
-                            <button class="maint-btn" id="maint-btn-backup">立即备份</button>
-                        </div>
-
-                        <div class="maint-action-group">
-                            <div class="action-meta">
-                                <h4>导出解析日志</h4>
-                                <p>将所有解析审计历史导出为 CSV 格式文件，便于 Excel 分析</p>
-                            </div>
-                            <button class="maint-btn" id="maint-btn-export">导出 CSV</button>
                         </div>
                     </div>
 
