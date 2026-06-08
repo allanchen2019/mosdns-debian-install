@@ -261,7 +261,14 @@ if systemctl restart mosdns.service; then
                 cd "${MOSDNS_DIR}/panel"
                 # Ensure dependencies are tidy and downloaded before compilation
                 go mod tidy > /dev/null 2>&1 || true
-                if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
+                LATEST_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+                if [ -n "${LATEST_TAG}" ]; then
+                    VERSION_VAL="${LATEST_TAG}"
+                else
+                    COMMIT_ID=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+                    VERSION_VAL="dev-${COMMIT_ID}"
+                fi
+                if CGO_ENABLED=1 go build -ldflags "-s -w -X main.panelVersion=${VERSION_VAL}" -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
                     echo "MosDNS Web Control Panel compiled successfully from source."
                     DEPLOY_PANEL_SUCCESS=true
                 else

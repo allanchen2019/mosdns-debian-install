@@ -91,14 +91,14 @@ if [ "${CHANNEL}" = "dev" ]; then
             TARGET_BRANCH=${TARGET_BRANCH:-main}
         fi
         echo "Switching to Dev target branch: ${TARGET_BRANCH}..."
-        git checkout "${TARGET_BRANCH}" > /dev/null 2>&1
+        git checkout -f "${TARGET_BRANCH}" > /dev/null 2>&1
         git reset --hard "origin/${TARGET_BRANCH}"
     fi
 else
     # Release channel: Checkout latest git tag
     LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "latest")
     echo "Switching to Release tag: ${LATEST_TAG}..."
-    git checkout "${LATEST_TAG}" > /dev/null 2>&1
+    git checkout -f "${LATEST_TAG}" > /dev/null 2>&1
     git reset --hard "${LATEST_TAG}"
 fi
 
@@ -126,7 +126,8 @@ if [ "${CHANNEL}" = "dev" ]; then
         if [ -f "${MOSDNS_BIN_DIR}/mosdns-panel" ]; then
             cp "${MOSDNS_BIN_DIR}/mosdns-panel" "${BACKUP_DIR}/mosdns-panel"
         fi
-        if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
+        COMMIT_ID=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        if CGO_ENABLED=1 go build -ldflags "-s -w -X main.panelVersion=dev-${COMMIT_ID}" -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
             echo "Web Control Panel compiled successfully from source."
             chmod 755 "${MOSDNS_BIN_DIR}/mosdns-panel"
             DEPLOY_PANEL_SUCCESS=true
@@ -169,7 +170,15 @@ else
             if [ -f "${MOSDNS_BIN_DIR}/mosdns-panel" ]; then
                 cp "${MOSDNS_BIN_DIR}/mosdns-panel" "${BACKUP_DIR}/mosdns-panel"
             fi
-            if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
+            VERSION_VAL="${LATEST_TAG}"
+            if [ -z "${VERSION_VAL}" ] || [ "${VERSION_VAL}" = "latest" ]; then
+                VERSION_VAL=$(git describe --tags --exact-match 2>/dev/null || echo "")
+                if [ -z "${VERSION_VAL}" ]; then
+                    COMMIT_ID=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+                    VERSION_VAL="dev-${COMMIT_ID}"
+                fi
+            fi
+            if CGO_ENABLED=1 go build -ldflags "-s -w -X main.panelVersion=${VERSION_VAL}" -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
                 echo "Web Control Panel compiled successfully from source."
                 chmod 755 "${MOSDNS_BIN_DIR}/mosdns-panel"
                 DEPLOY_PANEL_SUCCESS=true
