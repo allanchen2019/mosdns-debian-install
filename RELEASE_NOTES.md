@@ -16,3 +16,20 @@
 
 - **布局溢出与移动端自适应优化 (Layout & Overflow Fixes)**:
   - 修复了系统运维面板因内容增加导致最下方操作按钮被遮挡的问题。通过引入滚动容器包裹卡片，使页面高度完美贴合视口，并在移动端自适应适配网格高度。
+
+## 一键更新与升级命令 (One-Key Update Commands)
+
+### 1. 已经是 v5.x 的用户（本地更新命令）：
+```bash
+# 升级至最新 Release 稳定版
+bash /opt/mosdns/update-all.sh release
+
+# 升级至最新 Dev 开发版
+bash /opt/mosdns/update-all.sh dev
+```
+
+### 2. 远程/全新安装一键升级命令：
+```bash
+# 使用一键菜单进行安装或升级
+bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
+```
