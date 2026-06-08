@@ -262,6 +262,7 @@
                         <input type="text" class="search-input" id="audit-search-input" placeholder="输入搜索域名、客户端 IP 或分流策略...">
                         <button class="filter-btn" id="audit-btn-search">筛选</button>
                         <button class="filter-btn btn-reset" id="audit-btn-reset">重置</button>
+                        <button class="filter-btn" id="audit-btn-export" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--neon-green);">导出 CSV</button>
                     </div>
                     <div class="table-container audit-table-container">
                         <table>
@@ -322,6 +323,22 @@
                                 <button class="action-btn btn-start" id="header-btn-start">启动</button>
                                 <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
                             </div>
+                        </div>
+
+                        <div class="maint-action-group">
+                            <div class="action-meta">
+                                <h4>备份 SQLite 数据库</h4>
+                                <p>下载当前控制面板的 SQLite 数据库备份文件 (.db)</p>
+                            </div>
+                            <button class="maint-btn" id="maint-btn-backup">立即备份</button>
+                        </div>
+
+                        <div class="maint-action-group">
+                            <div class="action-meta">
+                                <h4>导出解析日志</h4>
+                                <p>将所有解析审计历史导出为 CSV 格式文件，便于 Excel 分析</p>
+                            </div>
+                            <button class="maint-btn" id="maint-btn-export">导出 CSV</button>
                         </div>
                     </div>
 

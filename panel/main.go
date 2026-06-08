@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -92,6 +93,8 @@ func registerAPIs() {
 	http.HandleFunc("/api/logs/stream", handleLogStream)
 	http.HandleFunc("/api/queries/stream", handleQueryStream)
 	http.HandleFunc("/api/maintenance/run", handleMaintenanceRun)
+	http.HandleFunc("/api/maintenance/backup", handleBackup)
+	http.HandleFunc("/api/maintenance/export", handleExportCSV)
 }
 
 // serveStatic serves embedded files safely with explicit content-type mappings
@@ -976,4 +979,65 @@ func handleCacheFlush(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Cache flushed and statistics reset successfully",
 	})
+}
+
+// handleBackup provides SQLite raw database backup downloading
+func handleBackup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	filename := fmt.Sprintf("mosdns_backup_%s.db", time.Now().Format("20060102_150405"))
+	w.Header().Set("Content-Type", "application/x-sqlite3")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	http.ServeFile(w, r, "/opt/mosdns/bin/panel.db")
+}
+
+// handleExportCSV queries all matching logs and streams them as a UTF-8 BOM CSV attachment
+func handleExportCSV(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	search := r.URL.Query().Get("search")
+	logs, err := GetAllQueryLogs(search)
+	if err != nil {
+		http.Error(w, "Database failure: "+err.Error(), 500)
+		return
+	}
+
+	filename := fmt.Sprintf("mosdns_queries_%s.csv", time.Now().Format("20060102_150405"))
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	// Write UTF-8 BOM so Excel opens it correctly
+	w.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	writer := csv.NewWriter(w)
+	header := []string{"ID", "解析时间", "客户端 IP", "查询域名", "查询类型", "分流策略", "响应耗时(ms)", "响应上游"}
+	if err := writer.Write(header); err != nil {
+		log.Printf("Error writing CSV header: %v", err)
+		return
+	}
+
+	for _, qlog := range logs {
+		row := []string{
+			strconv.FormatInt(qlog.ID, 10),
+			qlog.Time,
+			qlog.ClientIP,
+			qlog.Domain,
+			qlog.QType,
+			qlog.Status,
+			strconv.Itoa(qlog.DurationMs),
+			qlog.Upstream,
+		}
+		if err := writer.Write(row); err != nil {
+			log.Printf("Error writing CSV row: %v", err)
+			return
+		}
+	}
+	writer.Flush()
 }

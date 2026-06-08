@@ -307,3 +307,38 @@ func ClearQueryLogs() error {
 	_, _ = DB.Exec("VACUUM")
 	return nil
 }
+
+// GetAllQueryLogs retrieves all query logs with optional search filtering, ordered newest first.
+func GetAllQueryLogs(search string) ([]QueryLog, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("database is not initialized")
+	}
+	var rows *sql.Rows
+	var err error
+
+	selectQuery := `SELECT id, strftime('%Y-%m-%d %H:%M:%S', time, 'localtime'), client_ip, domain, qtype, status, duration_ms, upstream FROM query_logs`
+	if search != "" {
+		selectQuery += ` WHERE domain LIKE ? OR client_ip LIKE ? OR status LIKE ? ORDER BY id DESC`
+		searchParam := "%" + search + "%"
+		rows, err = DB.Query(selectQuery, searchParam, searchParam, searchParam)
+	} else {
+		selectQuery += ` ORDER BY id DESC`
+		rows, err = DB.Query(selectQuery)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to query records: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []QueryLog
+	for rows.Next() {
+		var q QueryLog
+		err := rows.Scan(&q.ID, &q.Time, &q.ClientIP, &q.Domain, &q.QType, &q.Status, &q.DurationMs, &q.Upstream)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		logs = append(logs, q)
+	}
+	return logs, nil
+}

@@ -58,6 +58,9 @@ function initApp() {
 
     // 8. Maintenance triggers
     setupMaintenance();
+
+    // 9. Data management (Backup & Export)
+    setupDataManagement();
 }
 
 /* ========================================================
@@ -1362,4 +1365,29 @@ function setupMaintenance() {
     document.getElementById('maint-btn-bin').addEventListener('click', () => {
         runMaintenance('update-bin', '二进制升级');
     });
+}
+
+function setupDataManagement() {
+    const backupBtn = document.getElementById('maint-btn-backup');
+    const exportMaintBtn = document.getElementById('maint-btn-export');
+    const exportAuditBtn = document.getElementById('audit-btn-export');
+
+    if (backupBtn) {
+        backupBtn.addEventListener('click', () => {
+            window.location.href = '/api/maintenance/backup';
+        });
+    }
+
+    if (exportMaintBtn) {
+        exportMaintBtn.addEventListener('click', () => {
+            window.location.href = '/api/maintenance/export';
+        });
+    }
+
+    if (exportAuditBtn) {
+        exportAuditBtn.addEventListener('click', () => {
+            const searchVal = state.auditSearch || '';
+            window.location.href = `/api/maintenance/export?search=${encodeURIComponent(searchVal)}`;
+        });
+    }
 }
