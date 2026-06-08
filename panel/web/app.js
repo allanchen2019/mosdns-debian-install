@@ -1320,7 +1320,7 @@ function appendTerminalLine(text, style) {
    9. MAINTENANCE OPERATIONS RUNNER (Stream Output via SSE)
    ======================================================= */
 function setupMaintenance() {
-    const runMaintenance = (action, jobName, channel = '') => {
+    const runMaintenance = (action, jobName, channel = '', mergeUpstream = false) => {
         if (!confirm(`确定要执行${jobName}吗？`)) return;
 
         // Force switch terminal view to Maintenance console
@@ -1332,7 +1332,7 @@ function setupMaintenance() {
         terminal.replaceChildren(); // Safe clear
 
         // Start SSE stream trigger
-        const sseUrl = `/api/maintenance/run?action=${action}${channel ? '&channel=' + channel : ''}`;
+        const sseUrl = `/api/maintenance/run?action=${action}${channel ? '&channel=' + channel : ''}${mergeUpstream ? '&merge_upstream=true' : ''}`;
         const sseSource = new EventSource(sseUrl);
         
         sseSource.onmessage = (event) => {
@@ -1393,8 +1393,10 @@ function setupMaintenance() {
         maintBtnSys.addEventListener('click', () => {
             const channelSelect = document.getElementById('maint-channel-select');
             const channel = channelSelect ? channelSelect.value : 'release';
+            const mergeCheckbox = document.getElementById('maint-merge-checkbox');
+            const mergeUpstream = mergeCheckbox ? mergeCheckbox.checked : false;
             const channelLabel = channel === 'dev' ? '系统更新 (Dev 开发版)' : '系统更新 (Release 稳定版)';
-            runMaintenance('update-sys', channelLabel, channel);
+            runMaintenance('update-sys', channelLabel, channel, mergeUpstream);
         });
     }
 }
