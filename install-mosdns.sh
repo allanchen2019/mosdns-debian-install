@@ -121,17 +121,61 @@ chmod 755 "${MOSDNS_BIN_DIR}/mosdns"
 
 # 6.5 Ensure default custom filter lists exist to prevent startup failure
 echo "Verifying presence of default custom domain filter lists..."
-for list_file in "direct-domain.txt" "local-domain.txt"; do
-    target_list_path="${MOSDNS_BIN_DIR}/${list_file}"
-    if [ ! -f "${target_list_path}" ]; then
-        echo "Creating default empty placeholder for custom list: ${list_file}"
-        cat << EOF > "${target_list_path}"
-# MosDNS 自定义域名列表 - ${list_file}
+# Initialize/update direct-domain.txt
+target_direct_path="${MOSDNS_BIN_DIR}/direct-domain.txt"
+if [ ! -f "${target_direct_path}" ]; then
+    echo "Creating default direct-domain.txt with custom direct routing rules..."
+    cat << 'EOF' > "${target_direct_path}"
+# MosDNS 自定义域名列表 - direct-domain.txt
 # 每行输入一个规则，例如 domain:example.com
+
+domain:taobao.com
+domain:alicdn.com
+domain:tbcdn.cn
+domain:cn
 EOF
-        chmod 644 "${target_list_path}"
-    fi
-done
+    chmod 644 "${target_direct_path}"
+else
+    echo "Updating existing direct-domain.txt with default direct routing rules..."
+    for rule in "domain:taobao.com" "domain:alicdn.com" "domain:tbcdn.cn" "domain:cn"; do
+        if ! grep -qxF "${rule}" "${target_direct_path}"; then
+            echo "${rule}" >> "${target_direct_path}"
+        fi
+    done
+fi
+
+# Initialize/update local-domain.txt
+target_local_path="${MOSDNS_BIN_DIR}/local-domain.txt"
+if [ ! -f "${target_local_path}" ]; then
+    echo "Creating default local-domain.txt with private network routing rules..."
+    cat << 'EOF' > "${target_local_path}"
+domain:lan
+domain:local
+domain:homelab
+domain:home
+domain:internal
+domain:10.in-addr.arpa
+domain:168.192.in-addr.arpa
+domain:17.172.in-addr.arpa
+domain:18.172.in-addr.arpa
+domain:19.172.in-addr.arpa
+domain:20.172.in-addr.arpa
+domain:21.172.in-addr.arpa
+domain:22.172.in-addr.arpa
+domain:23.172.in-addr.arpa
+domain:24.172.in-addr.arpa
+domain:25.172.in-addr.arpa
+domain:26.172.in-addr.arpa
+domain:27.172.in-addr.arpa
+domain:28.172.in-addr.arpa
+domain:29.172.in-addr.arpa
+domain:30.172.in-addr.arpa
+domain:31.172.in-addr.arpa
+domain:16.172.in-addr.arpa
+regexp:^[^.]+$
+EOF
+    chmod 644 "${target_local_path}"
+fi
 
 # 7. Initialize Geo resource files by invoking update-geo.sh
 echo "Initializing DNS resource lists via update-geo.sh..."
@@ -217,7 +261,14 @@ if systemctl restart mosdns.service; then
                 cd "${MOSDNS_DIR}/panel"
                 # Ensure dependencies are tidy and downloaded before compilation
                 go mod tidy > /dev/null 2>&1 || true
-                if CGO_ENABLED=1 go build -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
+                LATEST_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+                if [ -n "${LATEST_TAG}" ]; then
+                    VERSION_VAL="${LATEST_TAG}"
+                else
+                    COMMIT_ID=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+                    VERSION_VAL="dev-${COMMIT_ID}"
+                fi
+                if CGO_ENABLED=1 go build -ldflags "-s -w -X main.panelVersion=${VERSION_VAL}" -o "${MOSDNS_BIN_DIR}/mosdns-panel"; then
                     echo "MosDNS Web Control Panel compiled successfully from source."
                     DEPLOY_PANEL_SUCCESS=true
                 else

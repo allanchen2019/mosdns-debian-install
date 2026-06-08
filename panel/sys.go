@@ -134,23 +134,20 @@ func CheckReferencedFilesExist(configContent []byte, baseDir string) []string {
 }
 
 // RunMaintenanceScript executes geo rule update or program binary upgrade safely
-func RunMaintenanceScript(ctx context.Context, action string, writer io.Writer) error {
-	var scriptPath string
+func RunMaintenanceScript(ctx context.Context, action string, channel string, writer io.Writer) error {
+	var cmd *exec.Cmd
 	switch action {
 	case "update-geo":
-		scriptPath = "/opt/mosdns/update-geo.sh"
-	case "update-bin":
-		scriptPath = "/opt/mosdns/update-bin.sh"
+		cmd = exec.CommandContext(ctx, "/bin/bash", "/opt/mosdns/update-geo.sh")
+	case "update-sys":
+		if channel != "dev" && channel != "release" {
+			channel = "release"
+		}
+		cmd = exec.CommandContext(ctx, "/bin/bash", "/opt/mosdns/update-all.sh", channel)
 	default:
 		return fmt.Errorf("unsupported maintenance action: %s", action)
 	}
 
-	if _, err := os.Stat(scriptPath); err != nil {
-		return fmt.Errorf("script not found: %s", scriptPath)
-	}
-
-	// Execute via bash securely
-	cmd := exec.CommandContext(ctx, "/bin/bash", scriptPath)
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 

@@ -55,11 +55,6 @@
                     <h2 id="current-tab-title">控制主页</h2>
                     <p id="current-tab-desc">监控 MosDNS 解析数据与系统状态</p>
                 </div>
-                <div class="service-quick-actions">
-                    <button class="action-btn btn-restart" id="header-btn-restart">重启服务</button>
-                    <button class="action-btn btn-start" id="header-btn-start">启动</button>
-                    <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
-                </div>
             </header>
 
             <!-- =================== TAB 1: DASHBOARD =================== -->
@@ -147,6 +142,24 @@
                                     </tr>
                                 </thead>
                                 <tbody id="dashboard-top-domains-body">
+                                    <tr><td colspan="3" class="text-center">暂无分析数据</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="client-rank-card glass-card">
+                        <h3>24H 热门客户端 Top 10</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>排名</th>
+                                        <th>客户端 IP</th>
+                                        <th>请求次数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-top-clients-body">
                                     <tr><td colspan="3" class="text-center">暂无分析数据</td></tr>
                                 </tbody>
                             </table>
@@ -249,6 +262,7 @@
                         <input type="text" class="search-input" id="audit-search-input" placeholder="输入搜索域名、客户端 IP 或分流策略...">
                         <button class="filter-btn" id="audit-btn-search">筛选</button>
                         <button class="filter-btn btn-reset" id="audit-btn-reset">重置</button>
+                        <button class="filter-btn" id="audit-btn-export" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--neon-green);">导出 CSV</button>
                     </div>
                     <div class="table-container audit-table-container">
                         <table>
@@ -268,10 +282,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="pagination-bar">
-                        <button class="page-btn" id="audit-prev-btn">上一页</button>
-                        <span class="page-info" id="audit-page-info">第 1 页</span>
-                        <button class="page-btn" id="audit-next-btn">下一页</button>
+                    <div class="pagination-bar" id="audit-scroll-status" style="justify-content: center;">
+                        <span class="page-info" id="audit-scroll-text">滑动加载更多...</span>
+                        <span class="page-info" id="audit-total-info" style="margin-left: 15px; opacity: 0.7;"></span>
                     </div>
                 </div>
             </section>
@@ -284,20 +297,57 @@
                         <h3>运维指令</h3>
                         <p class="card-helper">更新域名规则和 MosDNS 主程序。</p>
                         
-                        <div class="maint-action-group">
-                            <div class="action-meta">
-                                <h4>更新 DNS 规则数据包</h4>
-                                <p>下载中国大陆域名直连、苹果分流、海外防污染及 CN IP 段数据</p>
+                        <div class="maint-actions-scroll">
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>更新 DNS 规则数据包</h4>
+                                    <p>下载中国大陆域名直连、苹果分流、海外防污染及 CN IP 段数据</p>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-geo">规则升级</button>
                             </div>
-                            <button class="maint-btn" id="maint-btn-geo">规则升级</button>
-                        </div>
 
-                        <div class="maint-action-group">
-                            <div class="action-meta">
-                                <h4>升级 MosDNS 二进制程序</h4>
-                                <p>拉取最新 Linux 架构二进制包并升级。</p>
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>系统更新与版本切换</h4>
+                                    <p>更新 MosDNS 主程序、控制面板与规则配置。</p>
+                                    <div class="channel-select-wrapper" style="margin-top: 8px;">
+                                        <label for="maint-channel-select" style="font-size: 13px; color: var(--text-dim); margin-right: 6px;">更新通道:</label>
+                                        <select id="maint-channel-select" class="maint-select">
+                                            <option value="release" selected>Release 稳定版</option>
+                                            <option value="dev">Dev 开发版</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-sys">系统更新</button>
                             </div>
-                            <button class="maint-btn" id="maint-btn-bin">二进制升级</button>
+
+                            <div class="maint-action-group service-control-group">
+                                <div class="action-meta">
+                                    <h4>DNS 服务控制</h4>
+                                    <p>重启、启动或停止本地 DNS 解析服务</p>
+                                </div>
+                                <div class="service-quick-actions">
+                                    <button class="action-btn btn-restart" id="header-btn-restart">重启服务</button>
+                                    <button class="action-btn btn-start" id="header-btn-start">启动</button>
+                                    <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
+                                </div>
+                            </div>
+
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>备份 SQLite 数据库</h4>
+                                    <p>下载当前控制面板的 SQLite 数据库备份文件 (.db)</p>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-backup">立即备份</button>
+                            </div>
+
+                            <div class="maint-action-group">
+                                <div class="action-meta">
+                                    <h4>导出解析日志</h4>
+                                    <p>将所有解析审计历史导出为 CSV 格式文件，便于 Excel 分析</p>
+                                </div>
+                                <button class="maint-btn" id="maint-btn-export">导出 CSV</button>
+                            </div>
                         </div>
                     </div>
 

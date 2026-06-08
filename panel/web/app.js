@@ -10,10 +10,12 @@ const state = {
     logSse: null,
     querySse: null,
     
-    // Audit Pagination
+    // Audit Pagination / Scroll
     auditPage: 1,
     auditPageSize: 50,
     auditSearch: '',
+    auditLoading: false,
+    auditHasMore: true,
     
     // Rules Selection
     selectedRuleFile: '',
@@ -56,6 +58,9 @@ function initApp() {
 
     // 8. Maintenance triggers
     setupMaintenance();
+
+    // 9. Data management (Backup & Export)
+    setupDataManagement();
 }
 
 /* ========================================================
@@ -212,6 +217,7 @@ function syncStats() {
 
             // 2. Render rank lists
             renderTopDomainsTable(data.top_domains);
+            renderTopClientsTable(data.top_clients);
             renderStatusDistTable(data.status_dist, data.total_queries);
 
             // 3. Render analytical line graph
@@ -250,6 +256,59 @@ function renderTopDomainsTable(domains) {
         
         tr.appendChild(tdRank);
         tr.appendChild(tdDomain);
+        tr.appendChild(tdCount);
+        tbody.appendChild(tr);
+    });
+}
+
+function renderTopClientsTable(clients) {
+    const tbody = document.getElementById('dashboard-top-clients-body');
+    tbody.replaceChildren();
+
+    if (!clients || clients.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.setAttribute('colspan', '3');
+        td.className = 'text-center';
+        td.textContent = '暂无分析记录数据';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+    }
+
+    clients.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        
+        const tdRank = document.createElement('td');
+        tdRank.textContent = String(index + 1);
+        
+        const tdIP = document.createElement('td');
+        tdIP.className = 'editor-path';
+        
+        const a = document.createElement('a');
+        a.href = '#';
+        a.style.color = 'var(--neon-blue)';
+        a.style.textDecoration = 'none';
+        a.style.cursor = 'pointer';
+        a.textContent = item.client_ip;
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            state.auditSearch = item.client_ip;
+            const searchInput = document.getElementById('audit-search-input');
+            if (searchInput) searchInput.value = item.client_ip;
+            
+            const queriesBtn = document.getElementById('nav-btn-queries');
+            if (queriesBtn) {
+                queriesBtn.click();
+            }
+        });
+        tdIP.appendChild(a);
+        
+        const tdCount = document.createElement('td');
+        tdCount.textContent = item.count.toLocaleString();
+        
+        tr.appendChild(tdRank);
+        tr.appendChild(tdIP);
         tr.appendChild(tdCount);
         tbody.appendChild(tr);
     });
@@ -966,55 +1025,95 @@ function setupRulesManager() {
    7. PARSED QUERIES HISTORICAL AUDIT (XSS Safe tables)
    ======================================================= */
 function fetchQueryHistory(page) {
+    if (state.auditLoading) return;
+    state.auditLoading = true;
     state.auditPage = page;
-    const tbody = document.getElementById('audit-table-body');
-    tbody.replaceChildren();
 
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.setAttribute('colspan', '7');
-    td.className = 'text-center text-dim';
-    td.textContent = '正在发起 SQLite 解析日志多条件查询审计中...';
-    tr.appendChild(td);
-    tbody.appendChild(tr);
+    const tbody = document.getElementById('audit-table-body');
+    const scrollText = document.getElementById('audit-scroll-text');
+    const totalInfo = document.getElementById('audit-total-info');
+
+    if (page === 1) {
+        tbody.replaceChildren();
+        state.auditHasMore = true;
+
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.setAttribute('colspan', '7');
+        td.className = 'text-center text-dim';
+        td.textContent = '正在发起 SQLite 解析日志多条件查询审计中...';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    }
+
+    if (scrollText) {
+        scrollText.textContent = '正在加载更多数据...';
+    }
 
     const queryUrl = `/api/queries/history?page=${page}&pageSize=${state.auditPageSize}&search=${encodeURIComponent(state.auditSearch)}`;
-    
+
     fetch(queryUrl)
         .then(res => res.json())
         .then(data => {
-            tbody.replaceChildren(); // Clear loading indicator
+            state.auditLoading = false;
+
+            if (page === 1) {
+                tbody.replaceChildren();
+            }
 
             const logs = data.logs;
             if (!logs || logs.length === 0) {
-                const trEmpty = document.createElement('tr');
-                const tdEmpty = document.createElement('td');
-                tdEmpty.setAttribute('colspan', '7');
-                tdEmpty.className = 'text-center text-dim';
-                tdEmpty.textContent = '没有找到符合特定筛选条件的解析记录。';
-                trEmpty.appendChild(tdEmpty);
-                tbody.appendChild(trEmpty);
-                
-                document.getElementById('audit-page-info').textContent = '无记录';
+                if (page === 1) {
+                    const trEmpty = document.createElement('tr');
+                    const tdEmpty = document.createElement('td');
+                    tdEmpty.setAttribute('colspan', '7');
+                    tdEmpty.className = 'text-center text-dim';
+                    tdEmpty.textContent = '没有找到符合特定筛选条件的解析记录。';
+                    trEmpty.appendChild(tdEmpty);
+                    tbody.appendChild(trEmpty);
+                }
+                state.auditHasMore = false;
+                if (scrollText) {
+                    scrollText.textContent = '已显示全部记录';
+                }
+                if (totalInfo) {
+                    totalInfo.textContent = `共 ${data.total_count || 0} 条`;
+                }
                 return;
             }
 
-            // Render table records dynamically and XSS-immune
             logs.forEach(log => {
                 const trRow = createQueryLogRow(log);
                 tbody.appendChild(trRow);
             });
 
-            // Update page controls
             const totalRecords = data.total_count || 0;
             const maxPages = Math.ceil(totalRecords / state.auditPageSize) || 1;
-            document.getElementById('audit-page-info').textContent = `第 ${page} / ${maxPages} 页 (共 ${totalRecords.toLocaleString()} 条)`;
-            
-            document.getElementById('audit-prev-btn').disabled = (page <= 1);
-            document.getElementById('audit-next-btn').disabled = (page >= maxPages);
+
+            if (totalInfo) {
+                totalInfo.textContent = `共 ${totalRecords.toLocaleString()} 条`;
+            }
+
+            if (page >= maxPages || logs.length < state.auditPageSize) {
+                state.auditHasMore = false;
+                if (scrollText) {
+                    scrollText.textContent = '已显示全部记录';
+                }
+            } else {
+                state.auditHasMore = true;
+                if (scrollText) {
+                    scrollText.textContent = '滑动加载更多...';
+                }
+            }
         })
         .catch(err => {
-            tbody.replaceChildren();
+            state.auditLoading = false;
+            if (page === 1) {
+                tbody.replaceChildren();
+            }
+            if (scrollText) {
+                scrollText.textContent = '加载失败，请重试';
+            }
             const trErr = document.createElement('tr');
             const tdErr = document.createElement('td');
             tdErr.setAttribute('colspan', '7');
@@ -1031,23 +1130,28 @@ function createQueryLogRow(log) {
     const tdTime = document.createElement('td');
     tdTime.className = 'text-dim';
     tdTime.textContent = log.time;
+    tdTime.setAttribute('data-label', '解析时间');
 
     const tdIP = document.createElement('td');
     tdIP.textContent = log.client_ip;
+    tdIP.setAttribute('data-label', '客户端 IP');
 
     const tdDomain = document.createElement('td');
     tdDomain.className = 'editor-path';
     tdDomain.textContent = log.domain;
+    tdDomain.setAttribute('data-label', '查询域名');
 
     const tdType = document.createElement('td');
     tdType.className = 'text-dim';
     tdType.textContent = log.qtype;
+    tdType.setAttribute('data-label', '类型');
 
     const tdStatus = document.createElement('td');
     const badge = document.createElement('span');
     badge.className = `badge-status ${getBadgeClass(log.status)}`;
     badge.textContent = log.status;
     tdStatus.appendChild(badge);
+    tdStatus.setAttribute('data-label', '分流策略');
 
     const tdLatency = document.createElement('td');
     if (log.duration_ms === 0) {
@@ -1056,10 +1160,12 @@ function createQueryLogRow(log) {
     } else {
         tdLatency.textContent = `${log.duration_ms} ms`;
     }
+    tdLatency.setAttribute('data-label', '响应耗时');
 
     const tdUpstream = document.createElement('td');
     tdUpstream.className = 'text-dim';
     tdUpstream.textContent = log.upstream;
+    tdUpstream.setAttribute('data-label', '响应上游');
 
     tr.appendChild(tdTime);
     tr.appendChild(tdIP);
@@ -1092,21 +1198,20 @@ function getBadgeClass(status) {
 }
 
 function setupAuditPagination() {
-    const prevBtn = document.getElementById('audit-prev-btn');
-    const nextBtn = document.getElementById('audit-next-btn');
     const searchBtn = document.getElementById('audit-btn-search');
     const resetBtn = document.getElementById('audit-btn-reset');
     const searchInput = document.getElementById('audit-search-input');
+    const container = document.querySelector('.audit-table-container');
 
-    prevBtn.addEventListener('click', () => {
-        if (state.auditPage > 1) {
-            fetchQueryHistory(state.auditPage - 1);
-        }
-    });
+    if (container) {
+        container.addEventListener('scroll', () => {
+            if (state.auditLoading || !state.auditHasMore) return;
 
-    nextBtn.addEventListener('click', () => {
-        fetchQueryHistory(state.auditPage + 1);
-    });
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 40) {
+                fetchQueryHistory(state.auditPage + 1);
+            }
+        });
+    }
 
     searchBtn.addEventListener('click', () => {
         state.auditSearch = searchInput.value.trim();
@@ -1215,7 +1320,7 @@ function appendTerminalLine(text, style) {
    9. MAINTENANCE OPERATIONS RUNNER (Stream Output via SSE)
    ======================================================= */
 function setupMaintenance() {
-    const runMaintenance = (action, jobName) => {
+    const runMaintenance = (action, jobName, channel = '') => {
         if (!confirm(`确定要执行${jobName}吗？`)) return;
 
         // Force switch terminal view to Maintenance console
@@ -1227,7 +1332,8 @@ function setupMaintenance() {
         terminal.replaceChildren(); // Safe clear
 
         // Start SSE stream trigger
-        const sseSource = new EventSource(`/api/maintenance/run?action=${action}`);
+        const sseUrl = `/api/maintenance/run?action=${action}${channel ? '&channel=' + channel : ''}`;
+        const sseSource = new EventSource(sseUrl);
         
         sseSource.onmessage = (event) => {
             const line = event.data;
@@ -1248,8 +1354,33 @@ function setupMaintenance() {
         };
 
         sseSource.onerror = (err) => {
-            appendTerminalLine(">> [ERROR] 终端连接中断，可能仍在后台执行，请稍后刷新确认。", 'error');
             sseSource.close();
+            if (action === 'update-sys') {
+                appendTerminalLine(">> [INFO] 控制面板正在重启以应用更新，正在尝试重新连接...", 'info');
+                
+                // Poll the status API to check when the panel comes back online
+                let retries = 15;
+                const pollInterval = setInterval(() => {
+                    fetch('/api/status')
+                        .then(res => {
+                            if (res.ok) {
+                                clearInterval(pollInterval);
+                                appendTerminalLine(">> [SUCCESS] 成功重新连接到控制面板，系统更新完成！", 'success');
+                                alert(`系统更新执行完毕，控制面板已成功重启。`);
+                                syncStatus();
+                            }
+                        })
+                        .catch(() => {
+                            retries--;
+                            if (retries <= 0) {
+                                clearInterval(pollInterval);
+                                appendTerminalLine(">> [ERROR] 无法重新连接到控制面板，请手动刷新网页检查服务状态。", 'error');
+                            }
+                        });
+                }, 1000);
+            } else {
+                appendTerminalLine(">> [ERROR] 终端连接中断，可能仍在后台执行，请稍后刷新确认。", 'error');
+            }
         };
     };
 
@@ -1257,7 +1388,38 @@ function setupMaintenance() {
         runMaintenance('update-geo', '规则升级');
     });
 
-    document.getElementById('maint-btn-bin').addEventListener('click', () => {
-        runMaintenance('update-bin', '二进制升级');
-    });
+    const maintBtnSys = document.getElementById('maint-btn-sys');
+    if (maintBtnSys) {
+        maintBtnSys.addEventListener('click', () => {
+            const channelSelect = document.getElementById('maint-channel-select');
+            const channel = channelSelect ? channelSelect.value : 'release';
+            const channelLabel = channel === 'dev' ? '系统更新 (Dev 开发版)' : '系统更新 (Release 稳定版)';
+            runMaintenance('update-sys', channelLabel, channel);
+        });
+    }
+}
+
+function setupDataManagement() {
+    const backupBtn = document.getElementById('maint-btn-backup');
+    const exportMaintBtn = document.getElementById('maint-btn-export');
+    const exportAuditBtn = document.getElementById('audit-btn-export');
+
+    if (backupBtn) {
+        backupBtn.addEventListener('click', () => {
+            window.location.href = '/api/maintenance/backup';
+        });
+    }
+
+    if (exportMaintBtn) {
+        exportMaintBtn.addEventListener('click', () => {
+            window.location.href = '/api/maintenance/export';
+        });
+    }
+
+    if (exportAuditBtn) {
+        exportAuditBtn.addEventListener('click', () => {
+            const searchVal = state.auditSearch || '';
+            window.location.href = `/api/maintenance/export?search=${encodeURIComponent(searchVal)}`;
+        });
+    }
 }

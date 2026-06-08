@@ -1,18 +1,18 @@
-# Release v5.1.2
+# Release v5.1.3
 
-## Changes in this Release
+## 版本更新要点 (Release Highlights)
 
-- **DNS Cache Clearing**:
-  - Added a button on the control panel homepage to clear the DNS cache.
-  - Optimized cache clearing logic to delete local persistent cache files on disk.
-  - Integrated cache clearing to reset SQLite query logs and Prometheus statistics.
-  - Corrected the API endpoint address used for cache clearing to the plugin's exclusive endpoint.
+- **系统更新机制重构 (System Update Refactoring)**:
+  - 增加对 Release 稳定版 (基于 GitHub Tag) 和 Dev 开发版 (基于分支最新 Commit) 切换与更新通道的支持。
+  - 在 Web 控制面板的“系统维护”卡片中新增了更新通道选择下拉框，并实现自重连与平滑升级体验。
+  - 重构 `update-all.sh` 脚本，在执行更新和 git 检出前，自动备份并在完成后恢复用户配置文件 (`config-v5.yaml`)、SQLite 数据库 (`panel.db*`) 以及自定义域名规则列表 (`direct-domain.txt`, `local-domain.txt`)，避免数据丢失。
+  - 解决由于本地配置/规则修改导致 Git 检出冲突的 Bug，采用 `git checkout -f` 强制切换以保证自更新逻辑的健壮性。
 
-- **DNS Resolution Optimization**:
-  - Moved local PTR and private domain resolution logic before the cache stage to allow configurations to take effect in real time.
+- **自定义域名直连与局域网自治默认配置 (Default Custom Rules Initialization)**:
+  - 优化 `install-mosdns.sh` 和 `update-all.sh`，在初次安装及日常更新时，自动检测并初始化 `direct-domain.txt`（默认包含 Taobao、AliCDN 和 `.cn` 的直连路由规则）和 `local-domain.txt`（包含局域网自治路由规则），确保最佳开箱体验。
 
-- **Installation & Maintenance**:
-  - Pointed the control panel binary download source in the installation scripts to the latest releases instead of the main branch.
+- **开发版版本号动态显示 (Dynamic Dev Version Display)**:
+  - 实现 local 本地编译与 GitHub Actions 远程编译时的 checkout 状态检测。如果是 Dev 开发版，版本号自动编译为 `dev-COMMIT_ID`；如果是 Release 稳定版，则显示对应的 GitHub Tag 名字。
 
-- **Style & Cleanliness**:
-  - Removed emojis, marketing fluff, and absolute claims from instructions, documentation, and user prompts.
+- **布局溢出与移动端自适应优化 (Layout & Overflow Fixes)**:
+  - 修复了系统运维面板因内容增加导致最下方操作按钮被遮挡的问题。通过引入滚动容器包裹卡片，使页面高度完美贴合视口，并在移动端自适应适配网格高度。
