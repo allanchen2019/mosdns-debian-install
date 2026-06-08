@@ -17,11 +17,12 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 安装完成后，系统会运行 `mosdns-panel.service` 守护进程：
 * **面板访问地址**：`http://<您的服务器IP>:8080` (支持内网访问)
 * **核心功能**：
-  * **仪表盘**：展示解析流量趋势及缓存状态。
-  * **解析日志审计**：流式推送解析详情并写入 SQLite。
-  * **在线编辑器**：修改并检查 `config-v5.yaml`。管理域名过滤列表，区分为只读列表与自定义可编辑列表。
+  * **仪表盘**：展示解析流量趋势、乐观缓存命中指标、系统资源占用（CPU/内存）、系统服务运行日志、运行时长、动态版本标签，以及 **24H 热门客户端 Top 10** 实时统计列表。
+  * **解析日志审计**：支持 **无限滚动连续加载（无需翻页）**，可通过点击客户端 IP 链接实现一键过滤检索，并支持带过滤条件的 UTF-8 BOM CSV 日志文件导出。
+  * **在线编辑器**：修改并检查 `config-v5.yaml` 及规则列表。内置预检引擎（沙箱运行及端口过滤）与缺失引用规则文件拦截预警，将配置与规则区分为只读列表与自定义可编辑列表。
   * **游戏分流开关**：支持细粒度的游戏规则列表（如 Steam, Nintendo, PlayStation, Epic Games, Blizzard, EA, Riot, Roblox, Tencent, Mihoyo, Bilibili 及其他游戏），并配备独立的启用开关。
-  * **终端控制台**：显示日志与执行输出。
+  * **自升级与服务控制**：支持一键重启、启动或停止 DNS 守护进程。运维卡片支持一键面板升级、SQLite 数据库备份，并可在网页端直接切换 **Release 稳定版** 或 **Dev 开发版** 更新通道。升级时提供原子级无损备份恢复与页面重连检测。
+  * **布局自适应**：精美暗色毛玻璃主题，引入独立滚动容器解决卡片垂直溢出问题，全面优化了窄屏/移动端下的卡片式数据堆叠。
 
 ### 定时任务更新 (Systemd Timer):
 在安装完成后，系统会自动运行 `mosdns-update.timer` 定时器，默认在每周日凌晨 04:00 自动触发数据更新 (`update-geo.sh`)。
@@ -35,18 +36,15 @@ systemctl status mosdns-update.timer
 journalctl -u mosdns-update.service -n 50
 ```
 
-### 手动更新资源文件:
+### 本地维护指令:
 ```bash
+# 手动更新至指定通道的最新版
+/opt/mosdns/update-all.sh [release|dev]
+
+# 手动更新 Geo 规则列表
 /opt/mosdns/update-geo.sh
-```
 
-### 手动更新二进制文件:
-```bash
-/opt/mosdns/update-bin.sh
-```
-
-### 卸载:
-```bash
+# 优雅卸载 mosdns 及控制面板
 /opt/mosdns/uninstall.sh
 ```
 
@@ -118,7 +116,7 @@ cd ~
 ### 解析规则与设计
 
 #### 1. 内存缓存 (mem_cache)
-*   **配置**：开启 20,480 容量的 Lazy Cache，TTL 最大延长至 86,400 秒。
+*   **配置**：开启 20,480 容量 of Lazy Cache，TTL 最大延长至 86,400 秒。
 *   **持久化**：每 10 分钟自动将内存缓存 Dump 至本地 `/opt/mosdns/bin/cache.dump`。
 *   **收益**：服务重启或资源更新后读取缓存文件，减少冷启动导致的局域网解析延迟。
 
@@ -127,8 +125,9 @@ cd ~
 *   **单 Label 拦截**：采用 `regexp:^[^.]+$` 匹配无后缀的局域网主机名解析（如 `pve`, `nas`）。
 *   **上游转发**：路由给本地网关。
 
-#### 3. 国内直连分流 (local_sequence)
+#### 3. 优化分流路由 (local_sequence)
 *   **匹配规则**：`china-list.txt`, `apple-cn.txt` 及直连白名单。
+*   **顺序重排**：匹配时将代理规则集 (`proxy-list.txt`) 置于国内规则之前检查，防止重合规则域名被泄露。
 *   **上游转发**：向阿里公共 DNS（`223.5.5.5`）与腾讯公共 DNS（`119.29.29.29`）发起并发请求。
 
 #### 4. 加密通道 (remote_sequence)
@@ -145,6 +144,9 @@ cd ~
 *   **国内透传与注入 (`ecs_domestic`)**：在向国内 DNS 发起请求前执行。若下游已携带 ECS 则透传；若无则自动注入客户端所在的公网子网，以获取更精确的 CDN 解析调度。
 *   **国外隐私去识别化 (`ecs_remote`)**：在流向海外加密通道前执行。清除内网私有网段及拓扑隐私，保护解析的私密性。
 
+#### 7. 动态版本编译标识
+*   自动识别 local 编译状态与 GitHub Actions 远程编译 checkout 分支/Tag，自动注入并映射编译标识为 Release 版本号 (如 `v5.1.3`) 或开发版最新 Commit ID (如 `dev-bfe0194`)。
+
 ---
 
 ## 运维脚本系统
@@ -157,13 +159,13 @@ cd ~
 2. **`install-mosdns.sh` (热安装器)**
    * **临时接管 DNS**：在安装和卸载期间，临时将系统 DNS 配置为公共 DNS，避免因旧服务停用导致解析死锁。
    * **启动可用性校验**：新服务启动后，先对本地 `127.0.0.1:53` 进行域名解析自检，确认无误后才切换为主 DNS。
-3. **`update-geo.sh` (数据包更新与校验)**
+   * **直连与局域网自治初始化**：自动检测并初始化 `direct-domain.txt`（默认填入 Taobao、AliCDN 和 `.cn` 的直连路由规则）和 `local-domain.txt`。
+3. **`update-all.sh` (自升级与版本切换)**
+   * **无损备份升级**：支持 `release` 稳定版及 `dev` 开发版通道。升级前自动对运行配置、SQLite 数据库、域名规则等资产执行临时空间原子化备份并在升级后完美恢复。
+   * **防检出阻断**：执行 Git checkout 时增加 `-f` 强制切换标识，彻底避免用户修改配置或本地更新引起的分支冲突问题。
+4. **`update-geo.sh` (数据包更新与校验)**
    * 采用原子性临时下载，并内置文件行数与体积限制校验，防止下载到空包或损坏的文件。
    * **并发隔离**：使用独立的备份空间，避免并发更新时临时备份文件被互相覆盖。
-4. **`update-bin.sh` (二进制热升级)**
-   * 升级架构自动判定，兼容极简系统。
-   * 使用 `mv` 虚拟文件系统原子替换，避开进程占用报错。
-   * 升级失败时自动启动回滚机制。
 5. **`uninstall.sh` (优雅卸载)**
    * 优先重写 DNS 状态并重建 `systemd-resolved` 软链接，最后再清理物理文件夹，避免由于脚本自身被删导致回滚瘫痪。
 
@@ -196,7 +198,7 @@ cd ~
 
 ### 致谢项目 (Acknowledgments)
 特别感谢以下开源项目，本项目的设计与分流数据直接或间接地引用了它们：
-- **[IrineSistiana/mosdns](https://github.com/IrineSistiana/mosdns)**：本项目核心所依赖 of DNS 转发引擎。
+- **[IrineSistiana/mosdns](https://github.com/IrineSistiana/mosdns)**：本项目核心所依赖的 DNS 转发引擎。
 - **[v2fly/domain-list-community](https://github.com/v2fly/domain-list-community)**：提供丰富准确的全球域名分流规则数据。
 - **[Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)**：为规则更新脚本提供稳定的自动化路由规则源。
 - **[felixonmars/dnsmasq-china-list](https://github.com/felixonmars/dnsmasq-china-list)**：提供国内直连域名的精确数据支持。
