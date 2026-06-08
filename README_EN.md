@@ -63,7 +63,8 @@ This project provides a DNS resolution pipeline tailored for homelab environment
 2. **LAN Domain Autonomy (local_router_sequence)**:
    * Direct routing for local domains (`*.lan`, `*.local`, `*.homelab`) and private PTR queries to local gateway.
    * Custom Regex `regexp:^[^.]+$` to block single-label hostname leakage to external DNS servers.
-3. **China Split-Routing (local_sequence)**:
+3. **Optimized China Split-Routing (local_sequence)**:
+   * **Priority Reordering**: Matches proxy rulesets (`proxy-list.txt`) **before** local ones to prevent overlapping rules from leaking queries.
    * Direct queries for Chinese domains (`china-list.txt`, `apple-cn.txt`) to local public DNS.
 4. **DoT Tunnel (remote_sequence)**:
    * DNS-over-TLS queries to public DNS servers.
@@ -74,12 +75,8 @@ This project provides a DNS resolution pipeline tailored for homelab environment
 6. **EDNS Client Subnet (ECS) (ecs_handler)**:
    * **`ecs_domestic`**: Forwards or injects client subnets (`/24` for IPv4, `/48` for IPv6) for domestic domains to aid CDN routing.
    * **`ecs_remote`**: Strips client subnets for external DNS requests for privacy.
-7. **Maintenance Scripts**:
-   * **`AutoSetup.sh`**: Script to bootstrap the installation.
-   * **`install-mosdns.sh`**: Installs mosdns and verifies configuration.
-   * **`update-geo.sh`**: Updates domain lists with validation checks.
-   * **`update-bin.sh`**: Updates the panel binary.
-   * **`uninstall.sh`**: Uninstalls the files and restores previous configurations.
+7. **Dynamic Build Versioning**:
+   * Auto-detects checkout state during compilation (local scripts or GitHub Actions). Sets version string dynamically to either GitHub Release tag (e.g. `v5.1.3`) or Git commit ID (e.g. `dev-bfe0194`).
 
 ---
 
@@ -96,20 +93,22 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
 After installation, the `mosdns-panel.service` is spawned automatically:
 * **Access URL**: `http://<YOUR_SERVER_IP>:8080` (accessible within your local LAN).
 * **Key Capabilities**:
-  * **Dashboard**: Shows query counts and cache statistics.
-  * **Query Audit**: Logs query history to SQLite.
-  * **Configuration Editor**: Allows modifying `config-v5.yaml` and lists in the browser.
-  * **Game Rules Switches**: Provides toggle switches for gaming domain lists.
-  * **Console**: Shows logs and execution output.
+  * **Dashboard**: Displays query counts, optimistic cache hits/size/rates, system resource metrics (CPU/RAM), active service systemd logs, running uptime, compile version string, and a **Top 10 Client IP** lookup table.
+  * **Query Audit**: Features continuous **infinite scroll** list loading, clickable client IP links for instant query filter drilling, and UTF-8 BOM CSV exports.
+  * **Configuration Editor**: Allows modifying `config-v5.yaml` and rule lists. Built-in pre-flight YAML checker (via sandboxed timeout dry-runs) and missing referenced files warning.
+  * **Service Control & Updates**: Direct buttons to Restart, Start, or Stop the MosDNS daemon. System maintenance section supports 1-click panel upgrades, SQLite database backups, and **Update Channel switching** (Release stable tags or Dev commits) with automatic configuration backups and client-reconnection checks.
+  * **Layout**: Sleek glassmorphism theme, fixed card container heights with scrolling, and mobile responsive card-based tables.
 
-### Binary Update
+### Local Maintenance Commands
 ```bash
-/opt/mosdns/update-bin.sh
-```
+# Update to latest release/dev version manually
+/opt/mosdns/update-all.sh [release|dev]
 
-### Resource Dataset Update
-```bash
+# Update Geo list rules manually
 /opt/mosdns/update-geo.sh
+
+# Uninstall and clean configurations
+/opt/mosdns/uninstall.sh
 ```
 
 ### Service Controls & Logging
@@ -120,13 +119,8 @@ systemctl status mosdns.service
 # Check Web Panel status
 systemctl status mosdns-panel.service
 
-# View weekly update timers
+# View weekly update timers (runs Sundays at 04:00)
 systemctl status mosdns-update.timer
-```
-
-### Uninstallation
-```bash
-/opt/mosdns/uninstall.sh
 ```
 
 ---
