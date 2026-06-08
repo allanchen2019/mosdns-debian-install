@@ -1354,8 +1354,33 @@ function setupMaintenance() {
         };
 
         sseSource.onerror = (err) => {
-            appendTerminalLine(">> [ERROR] 终端连接中断，可能仍在后台执行，请稍后刷新确认。", 'error');
             sseSource.close();
+            if (action === 'update-sys') {
+                appendTerminalLine(">> [INFO] 控制面板正在重启以应用更新，正在尝试重新连接...", 'info');
+                
+                // Poll the status API to check when the panel comes back online
+                let retries = 15;
+                const pollInterval = setInterval(() => {
+                    fetch('/api/status')
+                        .then(res => {
+                            if (res.ok) {
+                                clearInterval(pollInterval);
+                                appendTerminalLine(">> [SUCCESS] 成功重新连接到控制面板，系统更新完成！", 'success');
+                                alert(`系统更新执行完毕，控制面板已成功重启。`);
+                                syncStatus();
+                            }
+                        })
+                        .catch(() => {
+                            retries--;
+                            if (retries <= 0) {
+                                clearInterval(pollInterval);
+                                appendTerminalLine(">> [ERROR] 无法重新连接到控制面板，请手动刷新网页检查服务状态。", 'error');
+                            }
+                        });
+                }, 1000);
+            } else {
+                appendTerminalLine(">> [ERROR] 终端连接中断，可能仍在后台执行，请稍后刷新确认。", 'error');
+            }
         };
     };
 
