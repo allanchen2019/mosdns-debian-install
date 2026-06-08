@@ -642,6 +642,7 @@ func handleQueryStream(w http.ResponseWriter, r *http.Request) {
 func handleMaintenanceRun(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	channel := r.URL.Query().Get("channel")
+	mergeUpstream := r.URL.Query().Get("merge_upstream")
 	if action != "update-geo" && action != "update-sys" && action != "update-bin" {
 		http.Error(w, "Invalid maintenance action", http.StatusBadRequest)
 		return
@@ -661,9 +662,9 @@ func handleMaintenanceRun(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if action == "update-bin" {
 		// Map legacy action "update-bin" to "update-sys" on release channel for backward compatibility
-		err = RunMaintenanceScript(ctx, "update-sys", "release", logWriter)
+		err = RunMaintenanceScript(ctx, "update-sys", "release", "false", logWriter)
 	} else {
-		err = RunMaintenanceScript(ctx, action, channel, logWriter)
+		err = RunMaintenanceScript(ctx, action, channel, mergeUpstream, logWriter)
 	}
 
 	if err != nil {

@@ -30,6 +30,14 @@ if [ "${CHANNEL}" != "release" ] && [ "${CHANNEL}" != "dev" ]; then
 fi
 echo "Selected update channel: ${CHANNEL}"
 
+# Parse merge upstream option
+MERGE_UPSTREAM="${2:-false}"
+if [ "${MERGE_UPSTREAM}" != "true" ] && [ "${MERGE_UPSTREAM}" != "false" ]; then
+    echo "Error: Invalid merge_upstream value '${MERGE_UPSTREAM}'. Use 'true' or 'false'." >&2
+    exit 1
+fi
+echo "Merge upstream configuration: ${MERGE_UPSTREAM}"
+
 # 2. Detect Architecture
 if command -v dpkg >/dev/null 2>&1; then
     architecture=$(dpkg --print-architecture)
@@ -57,6 +65,7 @@ mkdir -p "${BACKUP_TEMP}"
 
 if [ -f "${MOSDNS_DIR}/config-v5.yaml" ]; then
     cp "${MOSDNS_DIR}/config-v5.yaml" "${BACKUP_TEMP}/"
+    git show HEAD:config-v5.yaml > "${BACKUP_TEMP}/config-v5.orig.yaml" 2>/dev/null || true
 fi
 # Backup SQLite panel database files
 for f in "${MOSDNS_BIN_DIR}"/panel.db*; do
@@ -68,6 +77,9 @@ done
 for f in "${MOSDNS_BIN_DIR}"/direct-domain.txt "${MOSDNS_BIN_DIR}"/local-domain.txt; do
     if [ -f "$f" ]; then
         cp "$f" "${BACKUP_TEMP}/"
+        base=$(basename "$f")
+        git show "HEAD:bin/${base}" > "${BACKUP_TEMP}/${base%.txt}.orig.txt" 2>/dev/null || \
+        git show "HEAD:${base}" > "${BACKUP_TEMP}/${base%.txt}.orig.txt" 2>/dev/null || true
     fi
 done
 
@@ -104,12 +116,54 @@ fi
 
 # 5. Restore Backup Configurations
 echo "Restoring configurations, databases, and rules..."
-if [ -f "${BACKUP_TEMP}/config-v5.yaml" ]; then
-    cp -f "${BACKUP_TEMP}/config-v5.yaml" "${MOSDNS_DIR}/"
-fi
-if [ -d "${BACKUP_TEMP}" ]; then
-    cp -f "${BACKUP_TEMP}"/panel.db* "${MOSDNS_BIN_DIR}/" 2>/dev/null || true
-    cp -f "${BACKUP_TEMP}"/*.txt "${MOSDNS_BIN_DIR}/" 2>/dev/null || true
+if [ "${MERGE_UPSTREAM}" = "true" ]; then
+    # Merge config-v5.yaml
+    if [ -f "${BACKUP_TEMP}/config-v5.yaml" ] && [ -f "${BACKUP_TEMP}/config-v5.orig.yaml" ] && [ -f "${MOSDNS_DIR}/config-v5.yaml" ]; then
+        temp_merged="${TEMP_DIR}/merged_config-v5.yaml"
+        cp -f "${BACKUP_TEMP}/config-v5.yaml" "${temp_merged}"
+        if git merge-file "${temp_merged}" "${BACKUP_TEMP}/config-v5.orig.yaml" "${MOSDNS_DIR}/config-v5.yaml" >/dev/null 2>&1; then
+            cp -f "${temp_merged}" "${MOSDNS_DIR}/config-v5.yaml"
+            echo "Successfully merged upstream changes into config-v5.yaml."
+        else
+            echo "Warning: Conflicts detected in config-v5.yaml during upstream merge. Falling back to local configuration." >&2
+            cp -f "${BACKUP_TEMP}/config-v5.yaml" "${MOSDNS_DIR}/"
+        fi
+    else
+        if [ -f "${BACKUP_TEMP}/config-v5.yaml" ]; then
+            cp -f "${BACKUP_TEMP}/config-v5.yaml" "${MOSDNS_DIR}/"
+        fi
+    fi
+
+    # Merge local-domain.txt
+    if [ -f "${BACKUP_TEMP}/local-domain.txt" ] && [ -f "${BACKUP_TEMP}/local-domain.orig.txt" ] && [ -f "${MOSDNS_BIN_DIR}/local-domain.txt" ]; then
+        temp_merged="${TEMP_DIR}/merged_local-domain.txt"
+        cp -f "${BACKUP_TEMP}/local-domain.txt" "${temp_merged}"
+        if git merge-file "${temp_merged}" "${BACKUP_TEMP}/local-domain.orig.txt" "${MOSDNS_BIN_DIR}/local-domain.txt" >/dev/null 2>&1; then
+            cp -f "${temp_merged}" "${MOSDNS_BIN_DIR}/local-domain.txt"
+            echo "Successfully merged upstream changes into local-domain.txt."
+        else
+            echo "Warning: Conflicts detected in local-domain.txt during upstream merge. Falling back to local configuration." >&2
+            cp -f "${BACKUP_TEMP}/local-domain.txt" "${MOSDNS_BIN_DIR}/local-domain.txt"
+        fi
+    else
+        if [ -f "${BACKUP_TEMP}/local-domain.txt" ]; then
+            cp -f "${BACKUP_TEMP}/local-domain.txt" "${MOSDNS_BIN_DIR}/local-domain.txt"
+        fi
+    fi
+
+    # Other files (panel.db*, direct-domain.txt) just restore
+    if [ -d "${BACKUP_TEMP}" ]; then
+        cp -f "${BACKUP_TEMP}"/panel.db* "${MOSDNS_BIN_DIR}/" 2>/dev/null || true
+        cp -f "${BACKUP_TEMP}"/direct-domain.txt "${MOSDNS_BIN_DIR}/" 2>/dev/null || true
+    fi
+else
+    if [ -f "${BACKUP_TEMP}/config-v5.yaml" ]; then
+        cp -f "${BACKUP_TEMP}/config-v5.yaml" "${MOSDNS_DIR}/"
+    fi
+    if [ -d "${BACKUP_TEMP}" ]; then
+        cp -f "${BACKUP_TEMP}"/panel.db* "${MOSDNS_BIN_DIR}/" 2>/dev/null || true
+        cp -f "${BACKUP_TEMP}"/*.txt "${MOSDNS_BIN_DIR}/" 2>/dev/null || true
+    fi
 fi
 rm -rf "${BACKUP_TEMP}"
 

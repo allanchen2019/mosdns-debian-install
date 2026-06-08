@@ -310,12 +310,18 @@
                                 <div class="action-meta">
                                     <h4>系统更新与版本切换</h4>
                                     <p>更新 MosDNS 主程序、控制面板与规则配置。</p>
-                                    <div class="channel-select-wrapper" style="margin-top: 8px;">
-                                        <label for="maint-channel-select" style="font-size: 13px; color: var(--text-dim); margin-right: 6px;">更新通道:</label>
-                                        <select id="maint-channel-select" class="maint-select">
-                                            <option value="release" selected>Release 稳定版</option>
-                                            <option value="dev">Dev 开发版</option>
-                                        </select>
+                                    <div class="channel-select-wrapper" style="margin-top: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                        <div style="display: flex; align-items: center;">
+                                            <label for="maint-channel-select" style="font-size: 13px; color: var(--text-dim); margin-right: 6px;">更新通道:</label>
+                                            <select id="maint-channel-select" class="maint-select">
+                                                <option value="release" selected>Release 稳定版</option>
+                                                <option value="dev">Dev 开发版</option>
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                            <input type="checkbox" id="maint-merge-checkbox" style="width: 14px; height: 14px; cursor: pointer;">
+                                            <label for="maint-merge-checkbox" style="font-size: 13px; color: var(--text-dim); cursor: pointer; user-select: none;">自动合并上游修改</label>
+                                        </div>
                                     </div>
                                 </div>
                                 <button class="maint-btn" id="maint-btn-sys">系统更新</button>
