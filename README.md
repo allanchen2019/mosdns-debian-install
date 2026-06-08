@@ -21,7 +21,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-in
   * **解析日志审计**：支持 **无限滚动连续加载（无需翻页）**，可通过点击客户端 IP 链接实现一键过滤检索，并支持带过滤条件的 UTF-8 BOM CSV 日志文件导出。
   * **在线编辑器**：修改并检查 `config-v5.yaml` 及规则列表。内置预检引擎（沙箱运行及端口过滤）与缺失引用规则文件拦截预警，将配置与规则区分为只读列表与自定义可编辑列表。
   * **游戏分流开关**：支持细粒度的游戏规则列表（如 Steam, Nintendo, PlayStation, Epic Games, Blizzard, EA, Riot, Roblox, Tencent, Mihoyo, Bilibili 及其他游戏），并配备独立的启用开关。
-  * **自升级与服务控制**：支持一键重启、启动或停止 DNS 守护进程。运维卡片支持一键面板升级、SQLite 数据库备份，并可在网页端直接切换 **Release 稳定版** 或 **Dev 开发版** 更新通道。升级时提供原子级无损备份恢复与页面重连检测。
+  * **自升级与服务控制**：支持一键重启、启动或停止 DNS 守护进程。运维卡片支持一键面板升级、SQLite 数据库备份，可在网页端直接切换 **Release 稳定版** 或 **Dev 开发版** 更新通道，并可勾选“自动合并上游修改”选项（使用 `git merge-file` 实现配置与规则的三向智能合并，若发生冲突自动降级退回以防止解析中断）。升级时提供原子级无损备份恢复与页面重连检测。
   * **布局自适应**：精美暗色毛玻璃主题，引入独立滚动容器解决卡片垂直溢出问题，全面优化了窄屏/移动端下的卡片式数据堆叠。
 
 ### 定时任务更新 (Systemd Timer):
@@ -38,8 +38,8 @@ journalctl -u mosdns-update.service -n 50
 
 ### 本地维护指令:
 ```bash
-# 手动更新至指定通道的最新版
-/opt/mosdns/update-all.sh [release|dev]
+# 手动更新至指定通道的最新版（可附带 true/false 参数选择是否合并上游修改，默认 false）
+/opt/mosdns/update-all.sh [release|dev] [true|false]
 
 # 手动更新 Geo 规则列表
 /opt/mosdns/update-geo.sh
