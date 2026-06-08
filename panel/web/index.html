@@ -55,11 +55,6 @@
                     <h2 id="current-tab-title">控制主页</h2>
                     <p id="current-tab-desc">监控 MosDNS 解析数据与系统状态</p>
                 </div>
-                <div class="service-quick-actions">
-                    <button class="action-btn btn-restart" id="header-btn-restart">重启服务</button>
-                    <button class="action-btn btn-start" id="header-btn-start">启动</button>
-                    <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
-                </div>
             </header>
 
             <!-- =================== TAB 1: DASHBOARD =================== -->
@@ -315,6 +310,18 @@
                                 <p>拉取最新 Linux 架构二进制包并升级。</p>
                             </div>
                             <button class="maint-btn" id="maint-btn-bin">二进制升级</button>
+                        </div>
+
+                        <div class="maint-action-group service-control-group">
+                            <div class="action-meta">
+                                <h4>DNS 服务控制</h4>
+                                <p>重启、启动或停止本地 DNS 解析服务</p>
+                            </div>
+                            <div class="service-quick-actions">
+                                <button class="action-btn btn-restart" id="header-btn-restart">重启服务</button>
+                                <button class="action-btn btn-start" id="header-btn-start">启动</button>
+                                <button class="action-btn btn-stop" id="header-btn-stop">停止</button>
+                            </div>
                         </div>
                     </div>
 

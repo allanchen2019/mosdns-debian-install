@@ -1163,24 +1163,146 @@ input:checked + .slider:before {
 
 /* Responsive Mobile Layout for Audit Logs Table */
 @media (max-width: 768px) {
-    .main-content {
-        padding: 20px 15px;
+    body {
+        padding: 0;
     }
     
+    .glass-container {
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border-right: none;
+        border-bottom: 1px solid var(--panel-border);
+        gap: 10px;
+    }
+
+    .brand {
+        margin-bottom: 0;
+        gap: 8px;
+    }
+
+    .brand-title {
+        display: none;
+    }
+
+    .nav-menu {
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        gap: 6px;
+        padding: 4px 0;
+        scrollbar-width: none;
+    }
+
+    .nav-menu::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-item {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .nav-item.active {
+        border-left: none;
+        border-bottom: 2px solid var(--neon-blue);
+        border-radius: 6px 6px 0 0;
+        padding-left: 10px;
+    }
+
+    .sidebar-footer {
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .status-badge-container {
+        padding: 4px 8px;
+    }
+
+    #mosdns-ping-text {
+        display: none;
+    }
+
+    .main-content {
+        padding: 8px;
+        height: calc(100vh - 54px);
+        overflow-y: auto;
+    }
+
+    .tab-panel.active {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    #tab-queries.active {
+        height: 100%;
+        overflow: hidden;
+    }
+
     .content-header {
+        display: none !important;
+    }
+    
+    .maint-action-group {
         flex-direction: column;
         align-items: flex-start;
-        gap: 15px;
+        gap: 12px;
+        width: 100%;
+    }
+    
+    .maint-action-group .maint-btn {
+        width: 100%;
+        text-align: center;
     }
     
     .service-quick-actions {
         width: 100%;
-        justify-content: space-between;
+        display: flex;
+        gap: 10px;
     }
     
     .action-btn {
         flex-grow: 1;
         justify-content: center;
+    }
+
+    .audit-layout {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    .filter-bar {
+        padding: 6px 0;
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .audit-table-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        height: 0;
+    }
+
+    .pagination-bar {
+        padding: 8px 10px;
     }
 
     .audit-table-container table, 
