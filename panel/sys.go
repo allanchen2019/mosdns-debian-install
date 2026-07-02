@@ -84,6 +84,55 @@ func ManageService(action string) (string, error) {
 	return out.String(), err
 }
 
+// GetMosdnsUptime returns the uptime of mosdns.service in seconds.
+// Returns 0 if service is not running.
+func GetMosdnsUptime() int64 {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// Get ActiveState first
+	stateCmd := exec.CommandContext(ctx, "/bin/systemctl", "show", "mosdns.service", "--property=ActiveState")
+	stateOut, err := stateCmd.Output()
+	if err != nil || !strings.Contains(string(stateOut), "ActiveState=active") {
+		return 0
+	}
+
+	// Get ActiveEnterTimestamp
+	cmd := exec.CommandContext(ctx, "/bin/systemctl", "show", "mosdns.service", "--property=ActiveEnterTimestamp")
+	out, err := cmd.Output()
+	if err != nil {
+		return 0
+	}
+
+	line := strings.TrimSpace(string(out))
+	parts := strings.SplitN(line, "=", 2)
+	if len(parts) < 2 {
+		return 0
+	}
+	timeStr := parts[1]
+	if timeStr == "" || timeStr == "n/a" {
+		return 0
+	}
+
+	// Parse the timestamp. Format: "Thu 2026-07-02 12:05:38 CST"
+	// Layout in Go: "Mon 2006-01-02 15:04:05 MST"
+	t, err := time.ParseInLocation("Mon 2006-01-02 15:04:05 MST", timeStr, time.Local)
+	if err != nil {
+		re := regexp.MustCompile(`\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}`)
+		match := re.FindString(timeStr)
+		if match != "" {
+			t, err = time.ParseInLocation("2006-01-02 15:04:05", match, time.Local)
+			if err == nil {
+				return int64(time.Since(t) / time.Second)
+			}
+		}
+		return 0
+	}
+
+	return int64(time.Since(t) / time.Second)
+}
+
+
 // ExtractReferencedFiles parses YAML config content and returns all relative file paths
 // referenced in "files:" sections (e.g., ./china-list.txt)
 func ExtractReferencedFiles(configContent []byte) []string {

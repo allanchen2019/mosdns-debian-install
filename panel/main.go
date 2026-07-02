@@ -153,7 +153,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"version":               panelVersion,
-		"panel_uptime_seconds":  time.Since(startTime) / time.Second,
+		"panel_uptime_seconds":  GetMosdnsUptime(),
 		"service_active":        isActive,
 		"service_log":           serviceStatus,
 		"ram_total_kb":          totalMem,
