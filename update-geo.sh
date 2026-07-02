@@ -26,7 +26,7 @@ echo "=========================================="
 # Define upstream URLs (using Loyalsoldier's trusted repositories and V2Fly source zip)
 URL_CHINA_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt"
 URL_APPLE_CN="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt"
-URL_PROXY_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt"
+URL_PROXY_LIST="https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt"
 URL_GEOIP_CN="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt"
 URL_GAMES_ZIP="https://github.com/v2fly/domain-list-community/archive/2fed2eca355a003db3cc4ada1c58c49be876c6a4.zip"
 
@@ -50,6 +50,54 @@ if ! download_file "${URL_CHINA_LIST}" "${TEMP_DIR}/china-list.txt" || \
     echo "Fatal: Resource downloading failed. Aborting update." >&2
     exit 1
 fi
+
+# 2.2 Decode and parse GFWList if the URL is from gfwlist
+if [[ "${URL_PROXY_LIST}" == *"gfwlist"* ]]; then
+    echo "GFWList source detected. Decoding and parsing domains..."
+    mv "${TEMP_DIR}/proxy-list.txt" "${TEMP_DIR}/proxy-list-raw.txt"
+    python3 -c '
+import base64, re, sys
+def clean_domain(line):
+    line = line.strip()
+    if not line or line.startswith(("!", "[")) or line.startswith("@@"):
+        return None
+    if line.startswith("||"):
+        domain = line[2:]
+    elif line.startswith("|http://") or line.startswith("|https://"):
+        domain = line.split("://", 1)[1]
+    elif line.startswith("|"):
+        domain = line[1:]
+    else:
+        domain = line
+    for char in ("/", ":", "?", "*"):
+        if char in domain:
+            domain = domain.split(char)[0]
+    domain = domain.strip(".")
+    if re.match(r"^[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$", domain):
+        return domain
+    return None
+
+try:
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
+        content = f.read().strip()
+    missing_padding = len(content) % 4
+    if missing_padding:
+        content += "=" * (4 - missing_padding)
+    decoded = base64.b64decode(content).decode("utf-8")
+    domains = set()
+    for line in decoded.splitlines():
+        dom = clean_domain(line)
+        if dom:
+            domains.add(dom)
+    with open(sys.argv[2], "w", encoding="utf-8") as f:
+        for dom in sorted(list(domains)):
+            f.write(dom + "\n")
+except Exception as e:
+    print(f"Error parsing gfwlist: {e}", file=sys.stderr)
+    sys.exit(1)
+' "${TEMP_DIR}/proxy-list-raw.txt" "${TEMP_DIR}/proxy-list.txt"
+fi
+
 
 # 2.3 Unzip domain-list-community archive
 echo "Extracting domain-list-community archive..."
