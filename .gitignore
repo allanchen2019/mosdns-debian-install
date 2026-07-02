@@ -29,6 +29,7 @@ bin/README.md
 bin/config.yaml
 bin/*.txt
 !bin/local-domain.txt
+!bin/direct-domain.txt
 bin/*.conf
 bin/*.conf2
 

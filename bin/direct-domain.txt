@@ -1,0 +1,9 @@
+# MosDNS 自定义域名列表 - direct-domain.txt
+# 每行输入一个规则，例如 domain:example.com
+domain:taobao.com
+domain:alicdn.com
+
+domain:tbcdn.cn
+domain:taobaocdn.com
+domain:tmall.com
+domain:mmstat.com
