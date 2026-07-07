@@ -76,14 +76,11 @@ plugins:
   type: forward
   args:
     concurrent: 2
-
-
     upstreams:
     - addr: "tls://1.1.1.1:853"
       enable_pipeline: true
     - addr: "tls://8.8.8.8:853"
       enable_pipeline: true
-
 
 # 5. 自愈兜底策略 (隐私优先：始终先尝试隧道，500ms 超时后回退国内 DNS)
 - tag: "remote_fallback_strategy"
@@ -114,6 +111,38 @@ plugins:
 - tag: "local_router_sequence"
   type: sequence
   args:
+  # 1. 环路防止：若反查属于 192.168.0.0/16 且客户端是 ROS 本身 (192.168.4.1)，说明本地未命中已回源，直接秒回 NXDOMAIN
+  - matches:
+    - "qtype 12"
+    - "qname 168.192.in-addr.arpa."
+    - "client_ip 192.168.4.1 ::ffff:192.168.4.1"
+    exec: reject 3
+  - matches:
+    - "qtype 12"
+    - "qname 168.192.in-addr.arpa."
+    - "client_ip 192.168.4.1 ::ffff:192.168.4.1"
+    exec: query_summary [loop_prevented_nxdomain]
+  - matches:
+    - "qtype 12"
+    - "qname 168.192.in-addr.arpa."
+    - "client_ip 192.168.4.1 ::ffff:192.168.4.1"
+    exec: return
+
+  # 2. 私有 IP 墙：直接拦截并拒绝除了 192.168.0.0/16 以外的其他私有反向解析（如 10.x.x.x, 172.16.x.x 等）
+  - matches:
+    - "qtype 12"
+    - "qname 10.in-addr.arpa. 16.172.in-addr.arpa. 17.172.in-addr.arpa. 18.172.in-addr.arpa. 19.172.in-addr.arpa. 20.172.in-addr.arpa. 21.172.in-addr.arpa. 22.172.in-addr.arpa. 23.172.in-addr.arpa. 24.172.in-addr.arpa. 25.172.in-addr.arpa. 26.172.in-addr.arpa. 27.172.in-addr.arpa. 28.172.in-addr.arpa. 29.172.in-addr.arpa. 30.172.in-addr.arpa. 31.172.in-addr.arpa."
+    exec: reject 3
+  - matches:
+    - "qtype 12"
+    - "qname 10.in-addr.arpa. 16.172.in-addr.arpa. 17.172.in-addr.arpa. 18.172.in-addr.arpa. 19.172.in-addr.arpa. 20.172.in-addr.arpa. 21.172.in-addr.arpa. 22.172.in-addr.arpa. 23.172.in-addr.arpa. 24.172.in-addr.arpa. 25.172.in-addr.arpa. 26.172.in-addr.arpa. 27.172.in-addr.arpa. 28.172.in-addr.arpa. 29.172.in-addr.arpa. 30.172.in-addr.arpa. 31.172.in-addr.arpa."
+    exec: query_summary [other_private_ptr_reject]
+  - matches:
+    - "qtype 12"
+    - "qname 10.in-addr.arpa. 16.172.in-addr.arpa. 17.172.in-addr.arpa. 18.172.in-addr.arpa. 19.172.in-addr.arpa. 20.172.in-addr.arpa. 21.172.in-addr.arpa. 22.172.in-addr.arpa. 23.172.in-addr.arpa. 24.172.in-addr.arpa. 25.172.in-addr.arpa. 26.172.in-addr.arpa. 27.172.in-addr.arpa. 28.172.in-addr.arpa. 29.172.in-addr.arpa. 30.172.in-addr.arpa. 31.172.in-addr.arpa."
+    exec: return
+
+  # 3. 正常转发：将正向 A 记录或未命中的 192.168.0.0/16 网段首次 PTR 查询转发给 ROS
   - exec: $router_forward
   - exec: query_summary [router_hit]
   - exec: return
