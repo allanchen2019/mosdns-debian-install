@@ -37,3 +37,4 @@ bin/*.conf2
 .vscode/
 .idea/
 *.swp
+.cursorrules

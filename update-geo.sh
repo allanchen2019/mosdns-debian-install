@@ -27,7 +27,6 @@ echo "=========================================="
 URL_CHINA_LIST="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt"
 URL_APPLE_CN="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt"
 URL_PROXY_LIST="https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt"
-URL_GEOIP_CN="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt"
 URL_GAMES_ZIP="https://github.com/v2fly/domain-list-community/archive/2fed2eca355a003db3cc4ada1c58c49be876c6a4.zip"
 
 # 2. Download files to temporary directory with retries and timeout
@@ -45,7 +44,6 @@ download_file() {
 if ! download_file "${URL_CHINA_LIST}" "${TEMP_DIR}/china-list.txt" || \
    ! download_file "${URL_APPLE_CN}" "${TEMP_DIR}/apple-cn.txt" || \
    ! download_file "${URL_PROXY_LIST}" "${TEMP_DIR}/proxy-list.txt" || \
-   ! download_file "${URL_GEOIP_CN}" "${TEMP_DIR}/cn.txt" || \
    ! download_file "${URL_GAMES_ZIP}" "${TEMP_DIR}/domain-list-community.zip"; then
     echo "Fatal: Resource downloading failed. Aborting update." >&2
     exit 1
@@ -196,10 +194,10 @@ compile_other() {
 
 (compile_other "category-games-cn" && compile_other "category-games-!cn") | sort -u > "${TEMP_DIR}/geosite_category-games-other.txt" || true
 
-# 3. Process GeoIP list (split CN IP into IPv4 and IPv6)
-echo "Processing China IP list..."
-grep -v ':' "${TEMP_DIR}/cn.txt" > "${TEMP_DIR}/cn_ipv4.txt" || true
-grep ':' "${TEMP_DIR}/cn.txt" > "${TEMP_DIR}/cn_ipv6.txt" || true
+# 3. Generate China IP list from APNIC stats (same source as RouterOS)
+echo "Generating China IP list from APNIC stats..."
+python3 "${MOSDNS_BIN_DIR}/get_cn_ip.py" "${TEMP_DIR}/cn_ipv4.txt" "${TEMP_DIR}/cn_ipv6.txt"
+
 
 # 4. Validate files to prevent empty/corrupted files from breaking MosDNS
 validate_file() {
