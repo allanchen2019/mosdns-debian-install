@@ -7,3 +7,19 @@ domain:tbcdn.cn
 domain:taobaocdn.com
 domain:tmall.com
 domain:mmstat.com
+# Microsoft Global Services (AS8075 Bypass)
+domain:microsoft.com
+domain:microsoftonline.com
+domain:live.com
+domain:office.com
+domain:office365.com
+domain:sharepoint.com
+domain:azure.com
+
+# Alibaba Cloud Overseas (AS45102 Bypass)
+domain:alibabacloud.com
+domain:alibabacloud.net
+
+# Tencent Cloud Global (AS133100 Bypass)
+domain:intl.cloud.tencent.com
+domain:tencentcloudapi.com

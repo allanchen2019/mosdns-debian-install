@@ -198,6 +198,27 @@ compile_other() {
 echo "Generating China IP list from APNIC stats..."
 python3 "${MOSDNS_BIN_DIR}/get_cn_ip.py" "${TEMP_DIR}/cn_ipv4.txt" "${TEMP_DIR}/cn_ipv6.txt"
 
+# Append premium direct-peer foreign Anycast IP blocks for dual-layer assurance
+cat <<EOF >> "${TEMP_DIR}/cn_ipv4.txt"
+# Microsoft Core Anycast (AS8075)
+13.107.21.0/24
+13.107.22.0/24
+13.107.42.0/24
+13.107.43.0/24
+23.96.0.0/13
+40.76.0.0/14
+# Apple Core Anycast (AS714)
+17.0.0.0/8
+# Akamai CDN Core Anycast (AS20940)
+23.0.0.0/12
+23.32.0.0/11
+# Alibaba Cloud SG/US Core Anycast (AS45102)
+47.88.0.0/16
+47.241.0.0/16
+# Tencent Cloud Intl Core Anycast (AS133100)
+150.109.0.0/16
+EOF
+
 
 # 4. Validate files to prevent empty/corrupted files from breaking MosDNS
 validate_file() {
