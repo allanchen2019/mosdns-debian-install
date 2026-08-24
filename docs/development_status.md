@@ -10,7 +10,7 @@
 *   **部署路径**：`/opt/mosdns/`
 *   **当前分支**：`main` (与远端 `origin/main` 完美对齐)
 *   **最新提交 (Commit)**：`8929fc323db365f67158cb0071a0f42087aabe96`
-*   **当前版本 (Version)**：`v5.1.3`
+*   **当前版本 (Version)**：`v5.1.4`
 *   **文档备份**：相关设计、审计、调优文档已同步备份至 `/opt/mosdns/docs/` 目录。
     *   [dns_audit_report.md](file:///opt/mosdns/docs/dns_audit_report.md)
     *   [development_status.md](file:///opt/mosdns/docs/development_status.md)
@@ -29,6 +29,11 @@
 | **自动化资源维护** | 🟢 已完成 | 整合 v2fly 规则集，细化 12 类游戏/直连列表更新逻辑，配置 systemd 定时器。 |
 | **动态上游审计 (v5.1.1)** | 🟢 已完成 | 动态解析 `config-v5.yaml`，将查询日志的响应上游字段从分组/序列标签（如 `local_sequence`）自动映射并记录为实际解析的服务器 IP 地址列表。 |
 | **编辑器缩进与校验 (v5.1.1)** | 🟢 已完成 | Web 端的 YAML 配置和规则列表编辑器拦截 `Tab` 键实现双空格缩进；保存配置时自动进行沙箱 timeout 预检及端口占用过滤，确保解析零中断。 |
+| **APNIC 官方源生成 CN IP (v5.1.4)** | 🟢 已完成 | 引入 `get_cn_ip.py` 从 APNIC 官方数据实时生成 IPv4/IPv6 CIDR，与 ROS 路由表策略同源。 |
+| **直连对等 AS 优质 IP/域名 (v5.1.4)** | 🟢 已完成 | 在 `direct-domain.txt` 与 `update-geo.sh` 注入 Microsoft/Apple/Akamai/阿里/腾讯海外 Anycast CIDR。 |
+| **PTR 反向解析防环与私有 IP 墙 (v5.1.4)** | 🟢 已完成 | 针对网关发起的反向 PTR 回源秒回 NXDOMAIN，入口拦截 RFC1918 私有反查。 |
+| **GFWList Base64 解码提取 (v5.1.4)** | 🟢 已完成 | 自动获取并 Base64 解码 GFWList 官方源，提取并清洗生成代理域名列表。 |
+| **MosDNS 核心运行时间精确展示 (v5.1.4)** | 🟢 已完成 | 面板通过 systemctl 属性准确提取 mosdns 核心进程运行时间。 |
 
 ---
 

@@ -20,6 +20,8 @@ Thumbs.db
 *.bak*
 *.tmp
 *~
+bin/backup-all/
+bin/backup-all
 
 # MosDNS local bin & resources
 bin/mosdns

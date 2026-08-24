@@ -1,22 +1,26 @@
-# Release v5.1.3
+# Release v5.1.4
 
 ## 版本更新要点 (Release Highlights)
 
-- **系统更新机制重构 (System Update Refactoring)**:
-  - 增加对 Release 稳定版 (基于 GitHub Tag) 和 Dev 开发版 (基于分支最新 Commit) 切换与更新通道的支持。
-  - 在 Web 控制面板的“系统维护”卡片中新增了更新通道选择下拉框，并实现自重连与平滑升级体验。
-  - 重构 `update-all.sh` 脚本，在执行更新和 git 检出前，自动备份并在完成后恢复用户配置文件 (`config-v5.yaml`)、SQLite 数据库 (`panel.db*`) 以及自定义域名规则列表 (`direct-domain.txt`, `local-domain.txt`)，避免数据丢失。
-  - 解决由于本地配置/规则修改导致 Git 检出冲突的 Bug，采用 `git checkout -f` 强制切换以保证自更新逻辑的健壮性。
-  - 新增“自动合并上游修改”开关选项（支持 Web 端勾选以及 CLI 参数传导）。更新过程中使用 `git merge-file` 实现 `config-v5.yaml` 及 `local-domain.txt` 规则列表的三向智能合并。若存在合并冲突将自动安全退回本地版本，防止解析服务中断。
+- **APNIC 官方源本地生成 CN IP 列表 (Direct CN IP Generation from APNIC)**:
+  - 引入 `bin/get_cn_ip.py`，直接从 APNIC 官方每日统计数据（`delegated-apnic-latest`）动态拉取并生成国内 IPv4 及 IPv6 CIDR 路由段。
+  - 彻底摆脱第三方 GitHub 仓库更新延迟与格式依赖，与 RouterOS / 上游路由表策略保持 100% 同源与时效一致性。
 
-- **自定义域名直连与局域网自治默认配置 (Default Custom Rules Initialization)**:
-  - 优化 `install-mosdns.sh` 和 `update-all.sh`，在初次安装及日常更新时，自动检测并初始化 `direct-domain.txt`（默认包含 Taobao、AliCDN 和 `.cn` 的直连路由规则）和 `local-domain.txt`（包含局域网自治路由规则），确保最佳开箱体验。
+- **直连对等 AS 优质 IP 与域名双层加速 (Dual-Layer Premium Peer ASN Acceleration)**:
+  - 在 `update-geo.sh` 与 `bin/direct-domain.txt` 中同步扩充境外直连对等优质 Anycast / CDN 网段（涵盖 Microsoft AS8075、Apple AS714、Akamai AS20940、Alibaba Cloud SG/US AS45102、Tencent Cloud Intl AS133100 等）以及常用国内直连域名，实现双层直连保障与低延迟解析。
 
-- **开发版版本号动态显示 (Dynamic Dev Version Display)**:
-  - 实现 local 本地编译与 GitHub Actions 远程编译时的 checkout 状态检测。如果是 Dev 开发版，版本号自动编译为 `dev-COMMIT_ID`；如果是 Release 稳定版，则显示对应的 GitHub Tag 名字。
+- **DNS 反向解析防环与私有 IP 墙 (PTR Loop Prevention & Private IP Filtering)**:
+  - 优化 `config-v5.yaml` 路由序列：针对网关自身（如 `192.168.4.1`）发起的 `192.168.0.0/16` PTR 反向查询在未命中时直接秒回 `NXDOMAIN` (reject 3)，杜绝 DNS 回源死循环。
+  - 入口直接拦截并拒绝非本地私有网段（10.0.0.0/8, 172.16.0.0/12 等）反向解析，降低无意义的上游递归查询。
 
-- **布局溢出与移动端自适应优化 (Layout & Overflow Fixes)**:
-  - 修复了系统运维面板因内容增加导致最下方操作按钮被遮挡的问题。通过引入滚动容器包裹卡片，使页面高度完美贴合视口，并在移动端自适应适配网格高度。
+- **GFWList 官方源 Base64 自动解码与提取 (GFWList Base64 Auto-Decoding)**:
+  - 重构 `update-geo.sh` 代理列表拉取模块，支持从 GFWList 官方源获取后自动进行 Base64 解码与精确域名清洗，保障代理域名列表的时效性与准确性。
+
+- **MosDNS 核心服务精确运行时间统计 (MosDNS Service Uptime Monitoring)**:
+  - Web 控制面板重构 Uptime 获取机制，通过 `systemctl show mosdns.service --property=ActiveEnterTimestamp` 精确获取并展示 MosDNS 核心守护进程的真实运行时间。
+
+- **忽略规则优化 (Ignore Rule Cleanliness)**:
+  - 将 `bin/backup-all/` 纳入 `.gitignore`，防止升级过程中的临时备份文件污染 Git 工作区。
 
 ## 一键更新与升级命令 (One-Key Update Commands)
 
@@ -34,3 +38,4 @@ bash /opt/mosdns/update-all.sh dev
 # 使用一键菜单进行安装或升级
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
+
