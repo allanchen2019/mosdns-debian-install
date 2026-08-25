@@ -2,7 +2,7 @@ api:
   http: "127.0.0.1:9080"
 
 log:
-  level: debug
+  level: info
   file: "/var/log/mosdns/mosdns.log"
 
 plugins:
@@ -11,7 +11,7 @@ plugins:
   type: cache
   args:
     size: 20480
-    lazy_cache_ttl: 86400
+    lazy_cache_ttl: 7200
     dump_file: "./cache.dump"
     dump_interval: 600
 
@@ -82,14 +82,14 @@ plugins:
     - addr: "tls://8.8.8.8:853"
       enable_pipeline: true
 
-# 5. 自愈兜底策略 (隐私优先：始终先尝试隧道，500ms 超时后回退国内 DNS)
+# 5. 自愈兜底策略 (隐私优先：始终先尝试隧道，300ms 超时后双发回退国内 DNS)
 - tag: "remote_fallback_strategy"
   type: fallback
   args:
     primary: remote_forward
     secondary: local_forward
-    threshold: 500
-    always_standby: false
+    threshold: 300
+    always_standby: true
 
 # 6. ECS 处理器 (避免内网私有 IP 作为 ECS 导致公网 CDN GSLB 异常调度)
 - tag: "ecs_domestic"
