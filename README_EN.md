@@ -75,8 +75,8 @@ This project provides a DNS resolution pipeline tailored for homelab environment
 6. **EDNS Client Subnet (ECS) (ecs_handler)**:
    * **`ecs_domestic`**: Forwards or injects client subnets (`/24` for IPv4, `/48` for IPv6) for domestic domains to aid CDN routing.
    * **`ecs_remote`**: Strips client subnets for external DNS requests for privacy.
-7. **Dynamic Version Compilation**
-   * Auto-detects checkout state during compilation (local scripts or GitHub Actions). Sets version string dynamically to either GitHub Release tag (e.g. `v5.1.4`) or Git commit ID (e.g. `dev-bfe0194`).
+#### 7. Dynamic Version Compilation
+* Auto-detects checkout state during compilation (local scripts or GitHub Actions). Sets version string dynamically to either GitHub Release tag (e.g. `v5.1.5`) or Git commit ID (e.g. `dev-bfe0194`).
 
 ---
 

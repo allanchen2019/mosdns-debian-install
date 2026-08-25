@@ -145,7 +145,7 @@ cd ~
 *   **国外隐私去识别化 (`ecs_remote`)**：在流向海外加密通道前执行。清除内网私有网段及拓扑隐私，保护解析的私密性。
 
 #### 7. 动态版本编译标识
-*   自动识别 local 编译状态与 GitHub Actions 远程编译 checkout 分支/Tag，自动注入并映射编译标识为 Release 版本号 (如 `v5.1.4`) 或开发版最新 Commit ID (如 `dev-bfe0194`)。
+*   自动识别 local 编译状态与 GitHub Actions 远程编译 checkout 分支/Tag，自动注入并映射编译标识为 Release 版本号 (如 `v5.1.5`) 或开发版最新 Commit ID (如 `dev-bfe0194`)。
 
 ---
 
