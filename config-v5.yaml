@@ -91,14 +91,12 @@ plugins:
     threshold: 500
     always_standby: false
 
-# 6. ECS 处理器 (用于国内 CDN 调度优化与国外隐私保护)
+# 6. ECS 处理器 (避免内网私有 IP 作为 ECS 导致公网 CDN GSLB 异常调度)
 - tag: "ecs_domestic"
   type: "ecs_handler"
   args:
-    forward: true
-    send: true
-    mask4: 24
-    mask6: 48
+    forward: false
+    send: false
 
 - tag: "ecs_remote"
   type: "ecs_handler"
