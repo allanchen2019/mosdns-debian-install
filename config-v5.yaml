@@ -6,13 +6,29 @@ log:
   file: "/var/log/mosdns/mosdns.log"
 
 plugins:
-# 1. 缓存插件 (启用乐观缓存，并持久化以防重启冷启动)
-- tag: "mem_cache"
+# 1. 按分流路径隔离缓存，避免域名规则变化或错误上游答案跨路径复用。
+- tag: "local_cache"
   type: cache
   args:
-    size: 20480
+    size: 8192
     lazy_cache_ttl: 7200
-    dump_file: "./cache.dump"
+    dump_file: "./cache-local.dump"
+    dump_interval: 600
+
+- tag: "remote_cache"
+  type: cache
+  args:
+    size: 8192
+    lazy_cache_ttl: 3600
+    dump_file: "./cache-remote.dump"
+    dump_interval: 600
+
+- tag: "fallback_cache"
+  type: cache
+  args:
+    size: 4096
+    lazy_cache_ttl: 1800
+    dump_file: "./cache-fallback.dump"
     dump_interval: 600
 
 # 2. 域名集合
@@ -41,6 +57,12 @@ plugins:
   args:
     files:
     - "./proxy-list.txt"
+
+- tag: "custom_iot_domain"
+  type: domain_set
+  args:
+    files:
+    - "./custom-iot.txt"
 
 - tag: "local_domain"
   type: domain_set
@@ -72,24 +94,53 @@ plugins:
     - addr: "119.29.29.29"
     - addr: "223.5.5.5"
 
-- tag: "remote_forward"
+- tag: "iot_forward"
   type: forward
   args:
     concurrent: 2
     upstreams:
-    - addr: "tls://1.1.1.1:853"
+    - addr: "114.114.114.114"
+    - addr: "114.114.115.115"
+
+- tag: "remote_forward"
+  type: forward
+  args:
+    # 每次只选择一个加密上游；失败/超时由下方独立 DoH 通道接管，
+    # 避免每个查询常态同时发送给多个解析商。
+    concurrent: 1
+    upstreams:
+    - addr: "tls://cloudflare-dns.com:853"
+      dial_addr: "1.1.1.1:853"
+      tag: "cloudflare_dot"
       enable_pipeline: true
-    - addr: "tls://8.8.8.8:853"
+    - addr: "tls://dns.google:853"
+      dial_addr: "8.8.8.8:853"
+      tag: "google_dot"
       enable_pipeline: true
 
-# 5. 自愈兜底策略 (隐私优先：始终先尝试隧道，300ms 超时后双发回退国内 DNS)
+# 独立的 HTTPS/443 加密备用通道，避免 DoT/853 受 QoS 干扰时回落到国内明文 DNS。
+- tag: "remote_doh_forward"
+  type: forward
+  args:
+    concurrent: 1
+    upstreams:
+    - addr: "https://cloudflare-dns.com/dns-query"
+      dial_addr: "1.1.1.1:443"
+      tag: "cloudflare_doh"
+    - addr: "https://dns.google/dns-query"
+      dial_addr: "8.8.8.8:443"
+      tag: "google_doh"
+
+# 5. 安全兜底策略
+# 海外域名只允许在加密上游之间切换，绝不回落到会受污染的国内明文 DNS。
 - tag: "remote_fallback_strategy"
   type: fallback
   args:
     primary: remote_forward
-    secondary: local_forward
-    threshold: 300
-    always_standby: true
+    secondary: remote_doh_forward
+    threshold: 500
+    # 不常态并发备用查询：主通道失败或超过阈值时才启动 DoH。
+    always_standby: false
 
 # 6. ECS 处理器 (避免内网私有 IP 作为 ECS 导致公网 CDN GSLB 异常调度)
 - tag: "ecs_domestic"
@@ -148,14 +199,32 @@ plugins:
 - tag: "local_sequence"
   type: sequence
   args:
+  - exec: $local_cache
+  - matches: has_resp
+    exec: query_summary [local_cache_hit]
+  - matches: has_resp
+    exec: accept
   - exec: $ecs_domestic
   - exec: $local_forward
   - exec: query_summary [local_hit]
   - exec: return
 
+- tag: "iot_sequence"
+  type: sequence
+  args:
+  - exec: $ecs_domestic
+  - exec: $iot_forward
+  - exec: query_summary [iot_hit]
+  - exec: return
+
 - tag: "remote_sequence"
   type: sequence
   args:
+  - exec: $remote_cache
+  - matches: has_resp
+    exec: query_summary [remote_cache_hit]
+  - matches: has_resp
+    exec: accept
   - exec: $ecs_remote
   - exec: $remote_fallback_strategy
   - exec: query_summary [remote_hit_resilient]
@@ -164,6 +233,11 @@ plugins:
 - tag: "fallback_sequence"
   type: sequence
   args:
+  - exec: $fallback_cache
+  - matches: has_resp
+    exec: query_summary [fallback_cache_hit]
+  - matches: has_resp
+    exec: accept
   - exec: $ecs_domestic
   - exec: $local_forward
   - matches: "resp_ip $cn_ip"
@@ -186,11 +260,8 @@ plugins:
   - matches: "qname $local_domain"
     exec: goto local_router_sequence
 
-  - exec: $mem_cache
-  - matches: has_resp
-    exec: query_summary [cache_hit]
-  - matches: has_resp
-    exec: accept
+  - matches: "qname $custom_iot_domain"
+    exec: goto iot_sequence
 
   - matches: "qname $remote_domain"
     exec: goto remote_sequence

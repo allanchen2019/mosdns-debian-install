@@ -1,3 +1,28 @@
+# Release v5.1.6
+
+## 版本更新要点 (Release Highlights)
+
+- **跨境加密解析稳定性与 SNI 修复 (Encrypted Upstream Reliability)**:
+  - 将 Cloudflare/Google DoT 上游恢复为域名 URL，并通过 `dial_addr` 固定到对应 Anycast IP，修复 IP 直连导致的 TLS SNI/证书不匹配。
+  - 新增 Cloudflare/Google DoH 备用通道；跨境解析只在 DoT 与 DoH 之间容灾，绝不回落到国内明文 DNS，降低污染、超时和 YouTube/CDN 间歇卡顿风险。
+
+- **分流缓存隔离 (Path-Isolated Caches)**:
+  - 按直连、代理、兜底路径拆分缓存与持久化文件，避免规则变化或错误上游答案跨路径复用。
+  - 保留 ECS 关闭策略，避免 RFC 1918 私网地址泄露并维持公网 CDN 正常调度。
+
+- **IoT 与现有路由策略保留 (Routing Compatibility)**:
+  - 保留现有国内直连、代理域名、IoT 专用解析及路由器查询路径；Akamai AS20940 等 BGP 直连策略不在 MosDNS 内改写。
+
+- **验证 (Validation)**:
+  - 已验证 Gemini、YouTube、国内直连域名与 DNSSEC 故障域名；生产服务重启后缓存加载、DoH 故障切换和海外明文泄露检查均通过。
+
+## Upgrade Notes
+
+- This release updates the MosDNS configuration package; the bundled MosDNS binary remains upstream `v5.3.4`.
+- Runtime cache dumps and rollback backups are intentionally not included in Git.
+
+---
+
 # Release v5.1.5
 
 ## 版本更新要点 (Release Highlights)
@@ -36,5 +61,4 @@ bash /opt/mosdns/update-all.sh dev
 # 使用一键菜单进行安装或升级
 bash <(curl -Ls https://raw.githubusercontent.com/allanchen2019/mosdns-debian-install/main/AutoSetup.sh)
 ```
-
 
